@@ -1,0 +1,18 @@
+__pycache__/
+*.pyc
+.gemini/
+.agents/
+.vscode/
+.idea/
+*.log
+*.tmp
+# Local scratch scripts
+scratch/
+extract_nb.py
+reorganize.py
+inspect_data.py
+check_packages.py
+run_baseline.py
+inspect_details.py
+check_corr.py
+test_app.py

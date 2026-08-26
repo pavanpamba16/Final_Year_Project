@@ -1,0 +1,775 @@
+/* ==========================================================================
+   Advanced Malaria Prediction Design System - CSS Stylesheet
+   ========================================================================== */
+
+/* Variables */
+:root {
+    --bg-main: #06090e;
+    --card-bg: rgba(13, 17, 24, 0.7);
+    --card-border: rgba(255, 255, 255, 0.04);
+    --text-primary: #f0f3f6;
+    --text-secondary: #8b949e;
+    --cyan-glow: #00e5ff;
+    --red-glow: #ff4757;
+    --green-glow: #2ed573;
+    --primary-gradient: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+    --font-heading: 'Outfit', sans-serif;
+    --font-body: 'Inter', sans-serif;
+}
+
+/* Base Styles */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* Glowing background artifacts */
+.glow-bg {
+    position: fixed;
+    top: -20%;
+    left: -10%;
+    width: 60vw;
+    height: 60vw;
+    background: radial-gradient(circle, rgba(79, 172, 254, 0.08) 0%, rgba(6, 9, 14, 0) 70%);
+    z-index: -1;
+    pointer-events: none;
+}
+
+/* Typography */
+h1, h2, h3, h4 {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+
+/* Layout Container */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+/* App Header */
+.app-header {
+    margin-bottom: 40px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    padding-bottom: 25px;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 6px;
+}
+
+.logo h1 {
+    font-size: 26px;
+    font-weight: 700;
+    background: linear-gradient(90deg, #ffffff, #8b949e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.badge {
+    display: inline-block;
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 2px 8px;
+    background: rgba(79, 172, 254, 0.15);
+    color: var(--cyan-glow);
+    border: 1px solid rgba(79, 172, 254, 0.2);
+    border-radius: 4px;
+    vertical-align: middle;
+    margin-left: 8px;
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    font-size: 15px;
+}
+
+/* Layout Grid */
+.layout-grid {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 30px;
+    align-items: start;
+}
+
+@media (max-width: 900px) {
+    .layout-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Glass Cards */
+.glass-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 30px;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.glass-card:hover {
+    border-color: rgba(255, 255, 255, 0.07);
+}
+
+.telemetry-card h3, .instructions-card h3, .disclaimer-card h3, .form-card h2, .result-card h2, .xai-card h3 {
+    font-size: 18px;
+    margin-bottom: 15px;
+    color: #ffffff;
+}
+
+.section-desc {
+    color: var(--text-secondary);
+    font-size: 13px;
+    margin-bottom: 25px;
+    margin-top: -10px;
+}
+
+/* Sidebar Info Cards */
+.sidebar-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Telemetry Grid */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.metric-item {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.metric-label {
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.metric-value {
+    font-family: var(--font-heading);
+    font-size: 20px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.text-glow-cyan {
+    color: var(--cyan-glow);
+    text-shadow: 0 0 15px rgba(0, 229, 255, 0.4);
+}
+
+.font-mono {
+    font-family: monospace;
+}
+
+/* Telemetry Status Indicator */
+.telemetry-footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 20px;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.status-indicator.online {
+    background-color: var(--green-glow);
+    box-shadow: 0 0 8px var(--green-glow);
+    animation: statusPulse 2s infinite;
+}
+
+@keyframes statusPulse {
+    0% { opacity: 0.4; }
+    50% { opacity: 1; }
+    100% { opacity: 0.4; }
+}
+
+.instructions-card ul {
+    list-style: none;
+}
+
+.instructions-card li {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    padding-left: 15px;
+    position: relative;
+}
+
+.instructions-card li::before {
+    content: "•";
+    color: var(--cyan-glow);
+    font-weight: bold;
+    font-size: 16px;
+    position: absolute;
+    left: 0;
+    top: -2px;
+}
+
+.disclaimer-card {
+    background: rgba(255, 71, 87, 0.02);
+    border: 1px solid rgba(255, 71, 87, 0.08);
+}
+
+.disclaimer-card p {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+/* Form Design */
+.form-card h2 {
+    font-size: 22px;
+    margin-bottom: 25px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+@media (max-width: 600px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    font-weight: 500;
+    font-size: 13px;
+    color: var(--text-primary);
+}
+
+.form-group input[type="number"] {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+    color: #ffffff;
+    font-size: 14px;
+    padding: 10px 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-group input[type="number"]:focus {
+    border-color: var(--cyan-glow);
+    box-shadow: 0 0 10px rgba(0, 229, 255, 0.15);
+    outline: none;
+}
+
+.input-hint {
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+/* Radio Button Group */
+.radio-group {
+    display: flex;
+    gap: 10px;
+    height: 43px;
+}
+
+.radio-label {
+    flex: 1;
+    display: block;
+    cursor: pointer;
+}
+
+.radio-label input[type="radio"] {
+    display: none;
+}
+
+.radio-label span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.radio-label input[type="radio"]:checked + span {
+    background: rgba(79, 172, 254, 0.1);
+    border-color: var(--cyan-glow);
+    color: #ffffff;
+    box-shadow: 0 0 10px rgba(0, 229, 255, 0.1);
+}
+
+/* Section divider */
+.card-divider {
+    border: 0;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.05);
+    margin: 30px 0;
+}
+
+.form-card h3 {
+    font-size: 18px;
+    margin-bottom: 5px;
+    color: #ffffff;
+}
+
+/* Symptom Checkboxes */
+.symptom-sections {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-top: 20px;
+}
+
+@media (max-width: 700px) {
+    .symptom-sections {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+}
+
+.symptom-column h4 {
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-secondary);
+    margin-bottom: 15px;
+    border-left: 2px solid var(--cyan-glow);
+    padding-left: 8px;
+}
+
+.symptom-column:last-of-type h4 {
+    border-left-color: var(--red-glow);
+}
+
+.checkbox-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.check-container {
+    display: flex;
+    align-items: center;
+    position: relative;
+    padding-left: 30px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text-secondary);
+    user-select: none;
+    transition: color 0.2s ease;
+}
+
+.check-container input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+.checkmark {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 18px;
+    width: 18px;
+    background-color: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.check-container:hover input ~ .checkmark {
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.check-container input:checked ~ .checkmark {
+    background-color: #00f2fe;
+    border-color: #00f2fe;
+}
+
+/* Checkmark sign */
+.checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+    left: 6px;
+    top: 2px;
+    width: 4px;
+    height: 9px;
+    border: solid #000000;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.check-container input:checked ~ .checkmark:after {
+    display: block;
+}
+
+.check-container input:checked ~ .label-text {
+    color: #ffffff;
+}
+
+/* Alert styling for severe indicators */
+.check-container.severe-alert input:checked ~ .checkmark {
+    background-color: var(--red-glow);
+    border-color: var(--red-glow);
+}
+
+.check-container.severe-alert input:checked ~ .checkmark:after {
+    border-color: #ffffff;
+}
+
+.check-container.severe-alert:hover input ~ .checkmark {
+    border-color: rgba(255, 71, 87, 0.4);
+}
+
+/* Button UI */
+.action-row {
+    margin-top: 35px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.btn-primary {
+    background: var(--primary-gradient);
+    border: 0;
+    border-radius: 8px;
+    color: #000000;
+    cursor: pointer;
+    font-family: var(--font-heading);
+    font-size: 14px;
+    font-weight: 700;
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(79, 172, 254, 0.4);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+.btn-icon {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.2s ease;
+}
+
+.btn-primary:hover .btn-icon {
+    transform: translateX(3px);
+}
+
+/* Result Dashboard styles */
+.result-main-panel {
+    display: flex;
+    flex-direction: column;
+}
+
+.risk-gauge-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    margin: 30px 0;
+}
+
+/* circular gauge ring */
+.gauge-ring {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.02);
+    border: 8px solid rgba(255, 255, 255, 0.03);
+    position: relative;
+}
+
+.gauge-ring::before {
+    content: "";
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    right: -8px;
+    bottom: -8px;
+    border-radius: 50%;
+    border: 8px solid transparent;
+}
+
+.high-risk-ring {
+    border-top-color: var(--red-glow);
+    border-right-color: var(--red-glow);
+    box-shadow: inset 0 0 20px rgba(255, 71, 87, 0.1), 0 0 20px rgba(255, 71, 87, 0.1);
+}
+
+.low-risk-ring {
+    border-top-color: var(--cyan-glow);
+    border-right-color: var(--cyan-glow);
+    box-shadow: inset 0 0 20px rgba(0, 229, 255, 0.1), 0 0 20px rgba(0, 229, 255, 0.1);
+}
+
+.probability-display {
+    font-family: var(--font-heading);
+    font-size: 38px;
+    font-weight: 800;
+    color: #ffffff;
+}
+
+.probability-sub {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+}
+
+/* risk level badge */
+.risk-badge {
+    font-family: var(--font-heading);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding: 6px 16px;
+    border-radius: 20px;
+    text-transform: uppercase;
+}
+
+.badge-high {
+    background: rgba(255, 71, 87, 0.15);
+    color: #ff6b81;
+    border: 1px solid rgba(255, 71, 87, 0.3);
+    box-shadow: 0 0 15px rgba(255, 71, 87, 0.2);
+}
+
+.badge-low {
+    background: rgba(0, 229, 255, 0.1);
+    color: var(--cyan-glow);
+    border: 1px solid rgba(0, 229, 255, 0.3);
+    box-shadow: 0 0 15px rgba(0, 229, 255, 0.15);
+}
+
+/* Reported symptom tags */
+.symptom-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 15px 0;
+}
+
+.symptom-tag {
+    font-size: 11px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 4px 10px;
+    border-radius: 6px;
+    color: var(--text-primary);
+}
+
+.none-tag {
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* Result action buttons */
+.result-actions {
+    justify-content: flex-start;
+    margin-top: 30px;
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+    color: #ffffff;
+    cursor: pointer;
+    font-family: var(--font-heading);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 10px 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.12);
+    transform: translateY(-1px);
+}
+
+.rotate-180 {
+    transform: rotate(180deg);
+}
+
+/* Explainable AI Side Panel */
+.result-sidebar-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.xai-group {
+    margin-bottom: 25px;
+}
+
+.xai-group:last-of-type {
+    margin-bottom: 0;
+}
+
+.xai-group h4 {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+}
+
+.xai-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.xai-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.xai-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+}
+
+.xai-name {
+    color: var(--text-primary);
+}
+
+.xai-val {
+    font-family: monospace;
+    font-weight: bold;
+}
+
+.text-red {
+    color: #ff6b81;
+}
+
+.text-green {
+    color: var(--green-glow);
+}
+
+.xai-bar-bg {
+    height: 4px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.xai-bar {
+    height: 100%;
+    border-radius: 2px;
+}
+
+.bar-red {
+    background: linear-gradient(90deg, #ff4757, #ff6b81);
+    box-shadow: 0 0 5px rgba(255, 71, 87, 0.5);
+}
+
+.bar-green {
+    background: linear-gradient(90deg, #2ed573, #7bed9f);
+    box-shadow: 0 0 5px rgba(46, 213, 115, 0.5);
+}
+
+.no-xai {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* Model Architecture Spec List */
+.model-meta-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 15px;
+}
+
+.model-meta-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    padding-bottom: 8px;
+}
+
+.model-meta-item:last-child {
+    border: 0;
+    padding: 0;
+}
+
+.model-meta-item span {
+    color: var(--text-secondary);
+}
+
+.model-meta-item strong {
+    color: #ffffff;
+}

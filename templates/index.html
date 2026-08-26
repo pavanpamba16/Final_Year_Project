@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Malaria Risk Analytics Suite (v2.0)</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="glow-bg"></div>
+    
+    <div class="container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo">
+                <span class="pulse-icon"></span>
+                <h1>Malaria Risk Analytics Suite <span class="badge">v2.0</span></h1>
+            </div>
+            <p class="subtitle">Explainable ML-based clinical decision support tool for severe malaria risk assessment</p>
+        </header>
+
+        <div class="layout-grid">
+            <!-- Sidebar Info Panel -->
+            <aside class="sidebar-panel">
+                <div class="glass-card telemetry-card">
+                    <h3>Model Telemetry</h3>
+                    <p class="section-desc">Real-time metrics validated on out-of-fold stratified predictions</p>
+                    
+                    <div class="metrics-grid">
+                        <div class="metric-item">
+                            <span class="metric-label">Validation Recall</span>
+                            <span class="metric-value text-glow-cyan">89.7%</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">ROC-AUC Score</span>
+                            <span class="metric-value">54.7%</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Generalization F1</span>
+                            <span class="metric-value">52.5%</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Decision Threshold</span>
+                            <span class="metric-value font-mono">0.347</span>
+                        </div>
+                    </div>
+
+                    <div class="telemetry-footer">
+                        <span class="status-indicator online"></span>
+                        <span>Production Pipeline Active</span>
+                    </div>
+                </div>
+
+                <div class="glass-card instructions-card">
+                    <h3>Clinical Protocol</h3>
+                    <ul>
+                        <li>Prioritize entering all observed systemic symptoms.</li>
+                        <li>Checkboxes denote laboratory-verified or physically observable signs.</li>
+                        <li>This model is optimized for **Sensitivity (89.7%)** to minimize False Negatives.</li>
+                    </ul>
+                </div>
+
+                <div class="glass-card disclaimer-card">
+                    <h3>⚠️ Medical Disclaimer</h3>
+                    <p>This is a machine learning-based decision-support system intended for educational and clinical research purposes only. It does not replace professional medical diagnosis, laboratory blood smears, or clinical trials.</p>
+                </div>
+            </aside>
+
+            <!-- Main Input Form -->
+            <main class="form-panel">
+                <div class="glass-card form-card">
+                    <h2>Patient Risk Assessment</h2>
+                    <form action="/predict" method="POST" id="assessment-form">
+                        
+                        <!-- Demographics -->
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="age">Patient Age (Years)</label>
+                                <input type="number" id="age" name="age" min="1" max="120" placeholder="e.g. 28" required>
+                                <span class="input-hint">Used for pediatric vs geriatric risk weighting</span>
+                            </div>
+                            <div class="form-group">
+                                <label>Patient Gender</label>
+                                <div class="radio-group">
+                                    <label class="radio-label">
+                                        <input type="radio" name="sex" value="0" checked>
+                                        <span>Female</span>
+                                    </label>
+                                    <label class="radio-label">
+                                        <input type="radio" name="sex" value="1">
+                                        <span>Male</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="card-divider">
+
+                        <!-- Symptoms Grid Section -->
+                        <h3>Clinical Manifestations</h3>
+                        <p class="section-desc">Select all present symptoms reported by the patient or observed during triage</p>
+                        
+                        <div class="symptom-sections">
+                            <!-- Mild / Systemic Symptoms -->
+                            <div class="symptom-column">
+                                <h4>Systemic Symptoms</h4>
+                                <div class="checkbox-list">
+                                    <label class="check-container">
+                                        <input type="checkbox" name="fever" value="1">
+                                        <span class="checkmark"></span>
+                                        <span class="label-text">Fever (Body Temp &ge; 37.5°C)</span>
+                                    </label>
+                                    <label class="check-container">
+                                        <input type="checkbox" name="cold" value="1">
+                                        <span class="checkmark"></span>
+                                        <span class="label-text">Cold / Chills</span>
+                                    </label>
+                                    <label class="check-container">
+                                        <input type="checkbox" name="rigor" value="1">
+                                        <span class="checkmark"></span>
+                                        <span class="label-text">Rigors (Shivering)</span>
+                                    </label>
+                                    <label class="check-container">
+                                        <input type="checkbox" name="fatigue" value="1">
+                                        <span class="checkmark"></span>
+                                        <span class="label-text">Fatigue / General Weakness</span>
+                                    </label>
+                                    <label class="check-container">
+                                        <input type="checkbox" name="headace" value="1">
+                                        <span class="checkmark"></span>
+                                        <span class="label-text">Headache</span>
+                                    </label>
+                                    <label class="check-container">
+                                        <input type="checkbox" name="bitter_tongue" value="1">
+                                        <span class="checkmark"></span>
+                                        <span class="label-text">Bitter Tongue (Dysgeusia)</span>
+                                    </label>
+                                    <label class="check-container">
+                                        <input type="checkbox" name="vomitting" value="1">
+                                        <span class="checkmark"></span>
+                                        <span class="label-text">Vomiting / Nausea</span>
+                                    </label>
+                                    <label class="check-container">
+                                        <input type="checkbox" name="diarrhea" value="1">
+                                        <span class="checkmark"></span>
+                                        <span class="label-text">Diarrhea</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Severe Symptoms -->
+                            <div class="symptom-column">
+                                <h4>Severe Complications (WHO Criteria)</h4>
+                                <div class="checkbox-list">
+                                    <label class="check-container severe-alert">
+                                        <input type="checkbox" name="Convulsion" value="1">
+                                        <span class="checkmark"></span>
+                                        <span class="label-text">Convulsions (Seizures)</span>
+                                    </label>
+                                    <label class="check-container severe-alert">
+                                        <input type="checkbox" name="Anemia" value="1">
+                                        <span class="checkmark"></span>
+                                        <span class="label-text">Severe Anemia</span>
+                                    </label>
+                                    <label class="check-container severe-alert">
+                                        <input type="checkbox" name="jundice" value="1">
+                                        <span class="checkmark"></span>
+                                        <span class="label-text">Jaundice (Yellow eyes/skin)</span>
+                                    </label>
+                                    <label class="check-container severe-alert">
+                                        <input type="checkbox" name="cocacola_urine" value="1">
+                                        <span class="checkmark"></span>
+                                        <span class="label-text">Coca-Cola Urine (Hemoglobinuria)</span>
+                                    </label>
+                                    <label class="check-container severe-alert">
+                                        <input type="checkbox" name="hypoglycemia" value="1">
+                                        <span class="checkmark"></span>
+                                        <span class="label-text">Hypoglycemia (Low blood sugar)</span>
+                                    </label>
+                                    <label class="check-container severe-alert">
+                                        <input type="checkbox" name="prostraction" value="1">
+                                        <span class="checkmark"></span>
+                                        <span class="label-text">Prostration (Extreme exhaustion)</span>
+                                    </label>
+                                    <label class="check-container severe-alert">
+                                        <input type="checkbox" name="hyperpyrexia" value="1">
+                                        <span class="checkmark"></span>
+                                        <span class="label-text">Hyperpyrexia (Temp &ge; 41°C)</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Submit -->
+                        <div class="action-row">
+                            <button type="submit" class="btn-primary">
+                                <span>Evaluate Risk Profile</span>
+                                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                </svg>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </main>
+        </div>
+    </div>
+</body>
+</html>

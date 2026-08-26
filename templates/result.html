@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Risk Assessment Result - Malaria Risk Analytics</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="glow-bg"></div>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo">
+                <span class="pulse-icon"></span>
+                <h1>Malaria Risk Analytics Suite <span class="badge">v2.0</span></h1>
+            </div>
+            <p class="subtitle">Diagnostic Telemetry & Explainable AI Risk Report</p>
+        </header>
+
+        <div class="layout-grid">
+            <!-- Left Side: Risk Level & Demographics -->
+            <main class="result-main-panel">
+                <div class="glass-card result-card">
+                    <h2>Diagnostic Summary</h2>
+                    
+                    <!-- Glow Gauge Card -->
+                    <div class="risk-gauge-box">
+                        <div class="gauge-ring {% if data.risk == 'HIGH' %}high-risk-ring{% else %}low-risk-ring{% endif %}">
+                            <span class="probability-display">{{ data.probability }}%</span>
+                            <span class="probability-sub">Severe Risk Score</span>
+                        </div>
+                        
+                        <div class="risk-badge {% if data.risk == 'HIGH' %}badge-high{% else %}badge-low{% endif %}">
+                            Risk Level: {{ data.risk }}
+                        </div>
+                    </div>
+
+                    <div class="telemetry-grid">
+                        <div class="metric-item">
+                            <span class="metric-label">Patient Age</span>
+                            <span class="metric-value">{{ data.age }} years</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Patient Gender</span>
+                            <span class="metric-value">{{ data.sex }}</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Model Threshold</span>
+                            <span class="metric-value font-mono">{{ data.threshold }}%</span>
+                        </div>
+                    </div>
+
+                    <hr class="card-divider">
+
+                    <h3>Reported Manifestations</h3>
+                    <div class="symptom-badges">
+                        {% if data.raw_symptoms %}
+                            {% for symptom, val in data.raw_symptoms.items() %}
+                                <span class="symptom-tag">{{ symptom.replace('_', ' ').title() }}</span>
+                            {% endfor %}
+                        {% else %}
+                            <span class="symptom-tag none-tag">No symptoms selected (Baseline check)</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="action-row result-actions">
+                        <a href="/" class="btn-secondary">
+                            <svg class="btn-icon rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                <polyline points="12 5 19 12 12 19"></polyline>
+                            </svg>
+                            <span>New Risk Assessment</span>
+                        </a>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Right Side: Explainable AI & Model Analytics -->
+            <aside class="result-sidebar-panel">
+                <!-- SHAP Explainability -->
+                <div class="glass-card xai-card">
+                    <h3>Explainable AI (SHAP Local Impact)</h3>
+                    <p class="section-desc">Identifies which patient factors contributed most to the model's decision</p>
+
+                    <!-- Positive Factors (Increased Risk) -->
+                    <div class="xai-group">
+                        <h4>Factors Increasing Severe Risk</h4>
+                        <div class="xai-list">
+                            {% if data.positives %}
+                                {% for item in data.positives %}
+                                    <div class="xai-item">
+                                        <div class="xai-meta">
+                                            <span class="xai-name">{{ item.friendly_name }}</span>
+                                            <span class="xai-val text-red">+{{ (item.shap_value * 100) | round(2) }}%</span>
+                                        </div>
+                                        <div class="xai-bar-bg">
+                                            <div class="xai-bar bar-red" style="width: {{ [item.shap_value * 150, 100] | min }}%"></div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <p class="no-xai">No positive contributing factors detected.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Negative Factors (Decreased Risk) -->
+                    <div class="xai-group">
+                        <h4>Factors Reducing Severe Risk</h4>
+                        <div class="xai-list">
+                            {% if data.negatives %}
+                                {% for item in data.negatives %}
+                                    <div class="xai-item">
+                                        <div class="xai-meta">
+                                            <span class="xai-name">{{ item.friendly_name }}</span>
+                                            <span class="xai-val text-green">{{ (item.shap_value * 100) | round(2) }}%</span>
+                                        </div>
+                                        <div class="xai-bar-bg">
+                                            <div class="xai-bar bar-green" style="width: {{ [item.shap_value * -150, 100] | min }}%"></div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <p class="no-xai">No risk-reducing factors detected.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Model Stats -->
+                <div class="glass-card telemetry-card">
+                    <h3>Model Architecture Details</h3>
+                    <div class="model-meta-list">
+                        <div class="model-meta-item">
+                            <span>Pipeline Classifier</span>
+                            <strong>Random Forest Classifier</strong>
+                        </div>
+                        <div class="model-meta-item">
+                            <span>Generalization Balancer</span>
+                            <strong>SMOTE Oversampling</strong>
+                        </div>
+                        <div class="model-meta-item">
+                            <span>Validation Recall</span>
+                            <strong>89.7%</strong>
+                        </div>
+                        <div class="model-meta-item">
+                            <span>Validation Specificity</span>
+                            <strong>21.4%</strong>
+                        </div>
+                        <div class="model-meta-item">
+                            <span>Validation Accuracy</span>
+                            <strong>44.7%</strong>
+                        </div>
+                        <div class="model-meta-item">
+                            <span>Pipeline Version</span>
+                            <span class="badge">{{ data.model_name }}</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+</body>
+</html>
