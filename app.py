@@ -1,6 +1,7 @@
 import os
 import sys
 import re
+import time
 import joblib
 import pandas as pd
 import numpy as np
@@ -10,6 +11,15 @@ from flask import Flask, request, render_template, jsonify
 sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
 from feature_engineering import MalariaFeatureEngineer
 from explain import explain_prediction_shap, explain_prediction_lime
+from multimodal_fusion import MalariaMultiModalEngine
+
+UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'static', 'uploads')
+SAMPLE_SMEARS_FOLDER = os.path.join(os.path.dirname(__file__), 'static', 'sample_smears')
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(SAMPLE_SMEARS_FOLDER, exist_ok=True)
+
+# Initialize Multi-Modal Vision Engine
+multimodal_engine = MalariaMultiModalEngine()
 
 def format_lime_rule(rule):
     """Translates raw mathematical LIME inequalities into clean clinical descriptions."""
@@ -155,7 +165,12 @@ def process_form_input(form_data):
 def index():
     # Render symptom entry page
     metrics = model_package['metrics'] if model_package else None
-    return render_template('index.html', symptoms=raw_symptoms_list, model_metrics=metrics)
+    return render_template(
+        'index.html',
+        symptoms=raw_symptoms_list,
+        model_metrics=metrics,
+        vision_metrics=multimodal_engine.metrics
+    )
 
 def compute_calibrated_clinical_risk(ml_prob, patient_raw_df):
     """
@@ -283,6 +298,60 @@ def predict():
             clinical_recommendation = "No acute malarial manifestations reported. Continue standard vector control and preventative measures."
             triage_status = "ROUTINE"
             
+    # Multi-Modal Vision Processing
+    vision_result = None
+    image_url = None
+    
+    # 1. Custom file upload
+    if 'smear_image' in request.files:
+        uploaded_file = request.files['smear_image']
+        if uploaded_file and uploaded_file.filename != '':
+            safe_filename = f"upload_{int(time.time())}_{os.path.basename(uploaded_file.filename)}"
+            save_path = os.path.join(UPLOAD_FOLDER, safe_filename)
+            uploaded_file.save(save_path)
+            vision_result = multimodal_engine.analyze_blood_smear(save_path)
+            image_url = f"/static/uploads/{safe_filename}"
+            
+    # 2. Preset sample smear selection
+    if vision_result is None:
+        sample_choice = request.form.get('sample_smear', '').strip()
+        if sample_choice:
+            sample_path = os.path.join(SAMPLE_SMEARS_FOLDER, sample_choice)
+            if os.path.exists(sample_path):
+                vision_result = multimodal_engine.analyze_blood_smear(sample_path)
+                image_url = f"/static/sample_smears/{sample_choice}"
+                
+    # Run Multi-Modal Fusion
+    active_severe_count = len(active_severe)
+    active_mild_count = active_symptoms_count - active_severe_count
+    
+    if vision_result is not None:
+        fusion_res = multimodal_engine.fuse_predictions(
+            clinical_prob=prob,
+            vision_result=vision_result,
+            active_severe_count=active_severe_count,
+            active_mild_count=active_mild_count
+        )
+        prob = fusion_res['fused_probability']
+        risk = "HIGH" if prob >= threshold else "LOW"
+        clinical_diagnosis = fusion_res.get('diagnostic_synthesis', clinical_diagnosis)
+        clinical_recommendation = fusion_res.get('triage_path', clinical_recommendation)
+        multimodal_data = {
+            'active': True,
+            'vision_result': vision_result,
+            'image_url': image_url,
+            'modality_used': fusion_res['modality_used'],
+            'diagnostic_synthesis': fusion_res.get('diagnostic_synthesis'),
+            'triage_path': fusion_res.get('triage_path')
+        }
+    else:
+        multimodal_data = {
+            'active': False,
+            'vision_result': None,
+            'image_url': None,
+            'modality_used': 'Clinical Manifestations Only'
+        }
+            
     # Render results template
     result_data = {
         'age': patient_raw_df.iloc[0]['age'],
@@ -299,6 +368,7 @@ def predict():
         'positives': pos_contribs[:5], # Top 5 contributors
         'negatives': neg_contribs[:5], # Top 5 mitigators
         'lime_explanations': lime_explanations[:6], # Top 6 LIME rules
+        'multimodal': multimodal_data,
         'model_name': model_package['version'],
         'model_metrics': model_package['metrics'],
         'date': model_package['date']

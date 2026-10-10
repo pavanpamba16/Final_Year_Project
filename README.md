@@ -107,18 +107,57 @@ When a prediction is run:
 
 ---
 
-## 8. Future Work & Academic Publication Scope (Final Year Project)
-For academic paper publication (e.g., IEEE JBHI, Elsevier AIIM, Nature Sci Rep) and final year project defense, the following research extensions are outlined:
+---
 
-1. **Multi-Modal Deep Learning & Blood Smear Microscopy Fusion**:
-   - Developing a dual-branch neural architecture combining tabular symptom embeddings with Convolutional Neural Networks (ConvNeXt / EfficientNet) or Vision Transformers (ViT) trained on Giemsa-stained thin/thick microscopic blood smear images.
-2. **Edge Computing & IoMT Offline Mobile Deployment**:
+## 8. Multi-Modal Vision Fusion (Implemented)
+To achieve gold-standard laboratory confirmation alongside clinical triage, the system includes an end-to-end **Multi-Modal Vision Fusion Architecture**:
+
+### 1. Dataset & Microscopic Imaging
+* **Dataset**: Authentic NIH Giemsa-Stained Thin Blood Smear Microscopic Erythrocyte Dataset (`data/cell_images/Dataset/`).
+* **Classes**:
+  * `Parasitized` ($P. falciparum$ ring-stage and schizont infected erythrocytes)
+  * `Uninfected` (Healthy normal red blood cells)
+* **Dataset Partitioning**: 416 training images, 134 strictly unseen test images.
+
+### 2. Deep Vision CNN Architecture (`src/train_vision.py`)
+* **3-Block Convolutional Backbone**:
+  * Block 1: `Conv2d(3, 32)` $\rightarrow$ `BatchNorm` $\rightarrow$ `ReLU` $\rightarrow$ `Conv2d(32, 32)` $\rightarrow$ `BatchNorm` $\rightarrow$ `ReLU` $\rightarrow$ `MaxPool2d(2, 2)`
+  * Block 2: `Conv2d(32, 64)` $\rightarrow$ `BatchNorm` $\rightarrow$ `ReLU` $\rightarrow$ `Conv2d(64, 64)` $\rightarrow$ `BatchNorm` $\rightarrow$ `ReLU` $\rightarrow$ `MaxPool2d(2, 2)`
+  * Block 3: `Conv2d(64, 128)` $\rightarrow$ `BatchNorm` $\rightarrow$ `ReLU` $\rightarrow$ `Conv2d(128, 128)` $\rightarrow$ `BatchNorm` $\rightarrow$ `ReLU` $\rightarrow$ `MaxPool2d(2, 2)`
+  * Global Aggregation: `AdaptiveAvgPool2d((1, 1))`
+  * Classifier Head: `Dropout(0.4)` $\rightarrow$ `Linear(128, 64)` $\rightarrow$ `ReLU` $\rightarrow$ `Dropout(0.3)` $\rightarrow$ `Linear(64, 2)`
+* **Training Hyperparameters**:
+  * Optimizer: Adam ($\text{lr} = 0.001$, weight decay = $1\times 10^{-4}$)
+  * Loss: CrossEntropyLoss
+  * Image Resolution: $64 \times 64$ RGB with normalized tensor transform.
+
+### 3. Microscopic Test Evaluation Metrics
+Tested on 134 unseen microscopic blood smear images:
+* **Accuracy**: **97.76%**
+* **Sensitivity / Recall**: **96.70%** (Detects 88 out of 91 infected blood smears)
+* **Specificity**: **100.00%** (Zero false positives on healthy blood smears)
+* **Precision**: **100.00%**
+* **ROC-AUC**: **99.87%**
+
+### 4. Mathematical Clinical Triangulation (`src/multimodal_fusion.py`)
+Fuses image parasitemia evidence ($P_{\text{parasite}}$) with clinical manifestation severity ($P_{\text{clinical}}$):
+1. **Microscopy (+) + WHO Severe Complications**: Confirmed Severe Malaria ($P_{\text{fused}} \in [78\%, 98.5\%]$) $\rightarrow$ *Emergency Parenteral IV Artesunate*.
+2. **Microscopy (+) + Mild Symptoms**: Confirmed Uncomplicated Malaria ($P_{\text{fused}} \in [25\%, 38\%]$) $\rightarrow$ *Outpatient Oral ACT (e.g. Coartem)*.
+3. **Microscopy (-) + Severe Symptoms**: Severe Non-Malarial Syndrome ($P_{\text{fused}} = 25\%$) $\rightarrow$ *Urgent differential for Bacterial Sepsis / Meningitis*.
+4. **Microscopy (-) + Mild Symptoms**: Non-Malarial Febrile Illness ($P_{\text{fused}} = 10\%$) $\rightarrow$ *Outpatient differential for Viral Syndrome / Typhoid*.
+
+---
+
+## 9. Future Work & Academic Publication Scope (Final Year Project)
+For academic paper publication (e.g., IEEE JBHI, Elsevier AIIM, Nature Sci Rep) and final year project defense, the following research extensions remain active:
+
+1. **Edge IoMT Offline Mobile Deployment**:
    - Applying INT8 post-training quantization to export models to ONNX and TFLite formats for offline mobile diagnostic execution on low-cost Android smartphones in remote rural clinics without internet connectivity.
-3. **Point-of-Care (PoC) Quantitative Biomarker Telemetry**:
+2. **Point-of-Care (PoC) Continuous Biomarkers**:
    - Expanding input parameters to continuous quantitative biomarkers (Parasite density per $\mu\text{L}$, hemoglobin levels, blood lactate, and automated lateral-flow RDT optical strip densitometry).
-4. **Federated Learning & Cross-Cohort Multi-Hospital Validation**:
+3. **Federated Learning & Cross-Cohort Multi-Hospital Validation**:
    - Implementing privacy-preserving Federated Learning (FedAvg with Differential Privacy) across multi-center international hospital registries to validate generalizability across diverse endemic zones.
-5. **Electronic Health Record (EHR) & HL7 FHIR Interoperability**:
+4. **Electronic Health Record (EHR) & HL7 FHIR Interoperability**:
    - Exposing certified HL7 FHIR APIs to seamlessly integrate automated severe malaria alerts directly into hospital triage systems.
 
 > For the comprehensive thesis abstract, mathematical formulation, defense viva Q&A cheatsheet, and journal submission guide, see [ACADEMIC_PUBLICATION_GUIDE.md](ACADEMIC_PUBLICATION_GUIDE.md).
