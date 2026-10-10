@@ -207,17 +207,25 @@ def compute_calibrated_clinical_risk(ml_prob, patient_raw_df):
             # Severe sign without documented fever (e.g. isolated convulsion or jaundice)
             base = 0.82 if severe_count == 1 else 0.87
             return min(0.92, round(base + age_boost, 3))
-    elif has_fever and secondary_mild_count >= 1:
-        # Classic Uncomplicated Malaria (Fever + Chills, Rigor, Headache, etc.)
-        # Scales accurately from 79% (1 mild symptom) to 87% (multiple classic signs)
-        base = 0.78 + min(0.09, (secondary_mild_count / 7.0) * 0.09)
-        return min(0.89, round(base + (0.02 if is_vulnerable else 0.0), 3))
-    elif has_fever:
-        # Isolated Fever only -> Indeterminate acute febrile illness (requires RDT)
-        return 0.42
+    # Uncomplicated presentations (No cardinal severe complications)
+    if has_fever:
+        if secondary_mild_count == 0:
+            # 1 symptom: Fever alone (Indeterminate febrile workup)
+            return 0.28
+        elif secondary_mild_count == 1:
+            # 2 symptoms: Fever + 1 mild symptom (e.g. Fever + Cold, Fever + Headache)
+            # 2 symptoms is non-specific / insufficient for definitive malaria (well below 56.4% cutoff)
+            return 0.38
+        elif secondary_mild_count == 2:
+            # 3 symptoms: Classic Triad (Fever + Cold + Rigors)
+            return 0.65
+        else:
+            # 4+ symptoms: Classic full malaria paroxysm complex (78% - 87%)
+            base = 0.78 + min(0.09, ((secondary_mild_count - 3) / 4.0) * 0.09)
+            return min(0.89, round(base + (0.02 if is_vulnerable else 0.0), 3))
     else:
         # Non-specific symptoms without fever (e.g. headache only, fatigue only)
-        return min(0.15, round(0.07 + (secondary_mild_count / 7.0) * 0.07, 3))
+        return min(0.18, round(0.06 + (secondary_mild_count / 7.0) * 0.08, 3))
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -315,19 +323,26 @@ def predict():
         triage_status = "EMERGENCY ADMISSION"
         status_tier = "CRITICAL"
         is_critical = True
-    elif has_fever and active_secondary_mild_count >= 1:
-        clinical_diagnosis = "Clinically Suspected Malaria (Uncomplicated Febrile Presentation)"
+    elif has_fever and active_secondary_mild_count >= 2:
+        clinical_diagnosis = "Clinically Suspected Malaria (Paroxysm Symptom Complex)"
         clinical_badge = "Suspected Malaria (Active Infection)"
-        clinical_recommendation = "PRESCRIBE ORAL ACT: Patient presents with classic uncomplicated febrile malaria symptom complex without vital organ failure. Prescribe oral Artemisinin-based Combination Therapy (ACT, e.g. Artemether-Lumefantrine / Coartem). Monitor for 48 hours."
+        clinical_recommendation = "PRESCRIBE ORAL ACT: Patient presents with classic uncomplicated febrile malaria symptom complex (3+ manifestations) without vital organ failure. Prescribe oral Artemisinin-based Combination Therapy (ACT, e.g. Artemether-Lumefantrine / Coartem). Monitor for 48 hours."
         triage_status = "OUTPATIENT / ORAL ACT"
         status_tier = "WARNING"
+        is_critical = False
+    elif has_fever and active_secondary_mild_count == 1:
+        clinical_diagnosis = "Mild Febrile Symptoms (Inconclusive / Malaria Unconfirmed)"
+        clinical_badge = "Low Suspicion (Diagnostic Test Required)"
+        clinical_recommendation = "Only 2 mild symptoms reported (fever + 1 secondary sign). This is insufficient clinical criteria to confirm active malaria or prescribe antimalarials. Perform a rapid diagnostic test (RDT) or Giemsa blood smear to rule out viral fever or common cold before starting ACT."
+        triage_status = "RDT / BLOOD SMEAR REQUIRED"
+        status_tier = "SAFE"
         is_critical = False
     elif has_fever:
         clinical_diagnosis = "Undifferentiated Febrile Illness (Diagnostic Confirmation Required)"
         clinical_badge = "Febrile Illness (Diagnostic Triage)"
-        clinical_recommendation = "Acute fever detected. Perform point-of-care Rapid Diagnostic Test (RDT) or Giemsa blood smear to confirm Plasmodium parasitemia prior to ACT administration. Rule out viral or bacterial etiology."
+        clinical_recommendation = "Acute fever detected without classic malaria triad. Perform point-of-care Rapid Diagnostic Test (RDT) or Giemsa blood smear to confirm Plasmodium parasitemia prior to ACT administration. Rule out viral or bacterial etiology."
         triage_status = "RDT / CLINICAL TRIAGE"
-        status_tier = "WARNING"
+        status_tier = "SAFE"
         is_critical = False
     elif active_symptoms_count > 0:
         clinical_diagnosis = "Mild Non-Specific Symptoms (Atypical for Acute Malaria)"
