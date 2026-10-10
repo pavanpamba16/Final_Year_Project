@@ -25,7 +25,25 @@
             <!-- Left Side: Risk Level & Demographics -->
             <main class="result-main-panel">
                 <div class="glass-card result-card">
-                    <h2>Diagnostic Summary</h2>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <h2 style="margin: 0;">Diagnostic Summary</h2>
+                        <span style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;">WHO Diagnostic Protocol</span>
+                    </div>
+
+                    <!-- Primary Malaria Diagnostic Verdict Banner -->
+                    <div class="verdict-box {{ data.verdict_badge_class }}">
+                        <div class="verdict-icon">
+                            {% if data.verdict_badge_class == 'verdict-critical' %}🚨
+                            {% elif data.verdict_badge_class == 'verdict-positive' %}🔴
+                            {% elif data.verdict_badge_class == 'verdict-inconclusive' %}🟡
+                            {% else %}🟢{% endif %}
+                        </div>
+                        <div class="verdict-content">
+                            <span class="verdict-pre-label">CLINICAL VERDICT (MALARIA STATUS):</span>
+                            <h3 class="verdict-main-heading">{{ data.malaria_verdict }}</h3>
+                            <p class="verdict-explanation">{{ data.verdict_summary }}</p>
+                        </div>
+                    </div>
                     
                     <!-- Glow Gauge Card -->
                     <div class="risk-gauge-box">

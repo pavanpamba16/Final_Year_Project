@@ -967,4 +967,93 @@ h1, h2, h3, h4 {
     }
 }
 
+/* Primary Malaria Diagnostic Verdict Banner */
+.verdict-box {
+    margin-bottom: 24px;
+    padding: 18px 22px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    animation: fadeInDown 0.4s ease;
+}
+
+.verdict-box.verdict-positive {
+    background: linear-gradient(135deg, rgba(255, 107, 129, 0.16), rgba(255, 71, 87, 0.08));
+    border: 2px solid rgba(255, 71, 87, 0.6);
+    box-shadow: 0 0 25px rgba(255, 71, 87, 0.25);
+}
+
+.verdict-box.verdict-critical {
+    background: linear-gradient(135deg, rgba(255, 71, 87, 0.25), rgba(255, 15, 50, 0.12));
+    border: 2px solid #ff4757;
+    box-shadow: 0 0 30px rgba(255, 71, 87, 0.4);
+}
+
+.verdict-box.verdict-inconclusive {
+    background: linear-gradient(135deg, rgba(255, 165, 2, 0.15), rgba(255, 177, 66, 0.08));
+    border: 2px solid rgba(255, 165, 2, 0.6);
+    box-shadow: 0 0 25px rgba(255, 165, 2, 0.2);
+}
+
+.verdict-box.verdict-negative {
+    background: linear-gradient(135deg, rgba(46, 213, 115, 0.15), rgba(0, 229, 255, 0.08));
+    border: 2px solid rgba(46, 213, 115, 0.6);
+    box-shadow: 0 0 25px rgba(46, 213, 115, 0.2);
+}
+
+.verdict-icon {
+    font-size: 34px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.verdict-content {
+    flex: 1;
+}
+
+.verdict-pre-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-secondary);
+    display: block;
+    margin-bottom: 4px;
+}
+
+.verdict-main-heading {
+    margin: 0;
+    font-size: 19px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+}
+
+.verdict-positive .verdict-main-heading {
+    color: #ff6b81;
+}
+
+.verdict-critical .verdict-main-heading {
+    color: #ff4757;
+}
+
+.verdict-inconclusive .verdict-main-heading {
+    color: #ffa502;
+}
+
+.verdict-negative .verdict-main-heading {
+    color: #2ed573;
+}
+
+.verdict-explanation {
+    margin: 4px 0 0 0;
+    font-size: 12.5px;
+    color: #cbd5e1;
+    line-height: 1.45;
+}
+
 

@@ -443,6 +443,49 @@ def predict():
         }
         
     risk = "HIGH" if status_tier == 'CRITICAL' else ("WARNING" if status_tier == 'WARNING' else "LOW")
+    
+    # Explicit Malaria Verdict Determination (Accurate positive/negative/inconclusive decision)
+    if vision_result is not None:
+        if vision_result['parasite_detected']:
+            if active_severe_count >= 1:
+                malaria_verdict = "MALARIA POSITIVE (CRITICAL SEVERE COMPLICATIONS)"
+                verdict_summary = "Plasmodium parasites confirmed via microscopy with WHO vital organ failure. Immediate emergency inpatient resuscitation required."
+                verdict_badge_class = "verdict-critical"
+            else:
+                malaria_verdict = "MALARIA POSITIVE (ACTIVE UNCOMPLICATED INFECTION)"
+                verdict_summary = "Plasmodium falciparum ring-stage parasites confirmed via blood smear microscopy. Prescribe oral Artemisinin-based Combination Therapy (ACT)."
+                verdict_badge_class = "verdict-positive"
+        else:
+            if active_severe_count >= 1:
+                malaria_verdict = "MALARIA NEGATIVE (NON-MALARIAL ACUTE EMERGENCY)"
+                verdict_summary = "Microscopy is NEGATIVE for Plasmodium malaria. However, the patient presents with life-threatening symptoms requiring immediate sepsis/meningitis emergency care."
+                verdict_badge_class = "verdict-critical"
+            else:
+                malaria_verdict = "MALARIA NEGATIVE (NO PARASITES DETECTED)"
+                verdict_summary = "Microscopy is NEGATIVE for Plasmodium parasites. Active malaria infection ruled out. Treat symptomatic complaints non-malarially."
+                verdict_badge_class = "verdict-negative"
+    else:
+        # Clinical symptoms alone (without microscopy image)
+        if active_severe_count >= 1:
+            malaria_verdict = "MALARIA POSITIVE (SEVERE COMPLICATION SUSPECTED)"
+            verdict_summary = "Patient exhibits WHO cardinal severe malaria complications (e.g. convulsions/jaundice). Urgent hospitalization and parenteral Artesunate indicated."
+            verdict_badge_class = "verdict-critical"
+        elif has_fever and active_secondary_mild_count >= 2:
+            malaria_verdict = "MALARIA POSITIVE (CLINICALLY SUSPECTED ACTIVE INFECTION)"
+            verdict_summary = "Classic malaria paroxysm triad confirmed (fever + chills + secondary signs). Prescribe oral first-line ACT (Coartem / Artemether-Lumefantrine)."
+            verdict_badge_class = "verdict-positive"
+        elif has_fever:
+            malaria_verdict = "INCONCLUSIVE (TESTING REQUIRED - MILD FEBRILE PRESENTATION)"
+            verdict_summary = "Only 1–2 mild symptoms reported. Insufficient clinical criteria for definitive malaria diagnosis. Rapid Diagnostic Test (RDT) or blood smear required before antimalarials."
+            verdict_badge_class = "verdict-inconclusive"
+        elif active_symptoms_count > 0:
+            malaria_verdict = "MALARIA NEGATIVE (NON-MALARIAL SYMPTOMS)"
+            verdict_summary = "Symptoms are atypical for acute malaria (no fever reported). Patient is negative for acute malaria. Investigate non-malarial causes."
+            verdict_badge_class = "verdict-negative"
+        else:
+            malaria_verdict = "MALARIA NEGATIVE (HEALTHY BASELINE)"
+            verdict_summary = "No acute malarial manifestations reported. Patient does not have malaria."
+            verdict_badge_class = "verdict-negative"
             
     # Render results template
     result_data = {
@@ -450,6 +493,9 @@ def predict():
         'sex': 'Male' if patient_raw_df.iloc[0]['sex'] == 1 else 'Female',
         'raw_symptoms': {s: patient_raw_df.iloc[0][s] for s in raw_symptoms_list if patient_raw_df.iloc[0][s] == 1},
         'active_severe_symptoms': active_severe,
+        'malaria_verdict': malaria_verdict,
+        'verdict_summary': verdict_summary,
+        'verdict_badge_class': verdict_badge_class,
         'clinical_diagnosis': clinical_diagnosis,
         'clinical_badge': clinical_badge,
         'clinical_recommendation': clinical_recommendation,
