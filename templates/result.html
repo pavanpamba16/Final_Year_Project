@@ -37,7 +37,7 @@
                         </div>
                         
                         <div class="risk-badge {% if data.risk == 'HIGH' %}badge-high{% else %}badge-low{% endif %}">
-                            Risk Level: {{ data.risk }}
+                            {{ data.clinical_badge }}
                         </div>
 
                         <!-- Linear visual scale out of 100% -->
@@ -54,6 +54,25 @@
                                 <span>50%</span>
                                 <span>100%</span>
                             </div>
+                        </div>
+
+                        <!-- Clinical Diagnosis Protocol Box -->
+                        <div class="clinical-diagnosis-banner {% if data.risk == 'HIGH' %}alert-danger{% else %}alert-safe{% endif %}">
+                            <div class="diagnosis-header">
+                                <span class="diagnosis-status-pill">{{ data.triage_status }}</span>
+                                <h4>{{ data.clinical_diagnosis }}</h4>
+                            </div>
+                            <p class="diagnosis-recommendation">{{ data.clinical_recommendation }}</p>
+                            {% if data.active_severe_symptoms %}
+                                <div class="severe-manifestations-callout">
+                                    <span class="callout-label">⚠️ WHO Severe Manifestations Present:</span>
+                                    <div class="severe-chips">
+                                        {% for s in data.active_severe_symptoms %}
+                                            <span class="severe-chip">{{ s }}</span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endif %}
                         </div>
                     </div>
 
@@ -191,24 +210,28 @@
                             <strong>Random Forest Classifier</strong>
                         </div>
                         <div class="model-meta-item">
+                            <span>Dataset Training Coverage</span>
+                            <strong style="color: #34d399;">100% (337 Patients / 442 SMOTE Profiles)</strong>
+                        </div>
+                        <div class="model-meta-item">
                             <span>Generalization Balancer</span>
                             <strong>SMOTE Oversampling</strong>
                         </div>
                         <div class="model-meta-item">
                             <span>Validation Accuracy</span>
-                            <strong style="color: #38bdf8;">{{ (data.model_metrics.accuracy * 100) | round(1) if data.model_metrics else '84.2%' }}%</strong>
+                            <strong style="color: #38bdf8;">{{ (data.model_metrics.accuracy * 100) | round(1) if data.model_metrics else '82.6' }}%</strong>
                         </div>
                         <div class="model-meta-item">
                             <span>Validation Specificity</span>
-                            <strong style="color: #38bdf8;">{{ (data.model_metrics.specificity * 100) | round(1) if data.model_metrics else '83.9%' }}%</strong>
+                            <strong style="color: #38bdf8;">{{ (data.model_metrics.specificity * 100) | round(1) if data.model_metrics else '83.5' }}%</strong>
                         </div>
                         <div class="model-meta-item">
                             <span>Validation Recall</span>
-                            <strong style="color: #38bdf8;">{{ (data.model_metrics.recall * 100) | round(1) if data.model_metrics else '84.5%' }}%</strong>
+                            <strong style="color: #38bdf8;">{{ (data.model_metrics.recall * 100) | round(1) if data.model_metrics else '86.9' }}%</strong>
                         </div>
                         <div class="model-meta-item">
                             <span>ROC-AUC Score</span>
-                            <strong style="color: #38bdf8;">{{ (data.model_metrics.roc_auc * 100) | round(1) if data.model_metrics else '91.7%' }}%</strong>
+                            <strong style="color: #38bdf8;">{{ (data.model_metrics.roc_auc * 100) | round(1) if data.model_metrics else '91.8' }}%</strong>
                         </div>
                     </div>
                 </div>

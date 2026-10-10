@@ -94,9 +94,11 @@ def compute_calibrated_clinical_risk(ml_prob, patient_raw_df):
     Blends the ML model probability with WHO Severe Malaria Clinical Manifestation criteria.
     Guarantees clinical consistency:
     - If all symptoms or multiple severe WHO signs (Convulsions, Jaundice, Coca-Cola Urine, etc.) are checked,
-      the severe risk score reflects critical severity (75% - 98%, HIGH RISK).
-    - If symptoms are mild or uncomplicated, risk remains appropriately low (15% - 35%, LOW RISK).
-    - If patient is asymptomatic, risk remains very low (10% - 15%, LOW RISK).
+      the severe risk score reflects critical severity (80% - 98.5%, HIGH RISK).
+    - If even 1 cardinal WHO severe marker is confirmed (e.g. Convulsions, Prostration, Coca-Cola Urine, etc.),
+      it confirms Severe Malaria (70% - 78%, HIGH RISK).
+    - If symptoms are mild or uncomplicated, risk remains appropriately low (18% - 36%, LOW RISK).
+    - If patient is asymptomatic, risk remains baseline (10% - 14%, LOW RISK).
     """
     row = patient_raw_df.iloc[0]
     severe_markers = ['Convulsion', 'Anemia', 'jundice', 'cocacola_urine', 'hypoglycemia', 'prostraction', 'hyperpyrexia']
@@ -111,19 +113,19 @@ def compute_calibrated_clinical_risk(ml_prob, patient_raw_df):
         
     if severe_count >= 5 or total_count >= 12:
         # Critical clinical profile (all or nearly all manifestations present)
-        calibrated = max(0.88, 0.72 + (severe_count / 7.0) * 0.18 + (total_count / 15.0) * 0.08)
-        return min(0.98, calibrated)
+        calibrated = max(0.92, 0.85 + (severe_count / 7.0) * 0.09 + (total_count / 15.0) * 0.04)
+        return min(0.985, calibrated)
     elif severe_count >= 2:
         # Multiple WHO severe criteria confirmed
-        calibrated = max(0.65, ml_prob * 0.35 + (severe_count / 7.0) * 0.38 + (total_count / 15.0) * 0.15)
-        return min(0.92, calibrated)
+        calibrated = max(0.80, ml_prob * 0.25 + 0.65 + (severe_count / 7.0) * 0.15 + (total_count / 15.0) * 0.08)
+        return min(0.94, calibrated)
     elif severe_count == 1:
-        # 1 WHO severe criterion present
-        calibrated = max(0.48, ml_prob * 0.55 + 0.18 + (total_count / 15.0) * 0.10)
-        return min(0.68, calibrated)
+        # 1 WHO cardinal severe criterion present -> Confirmed Severe Malaria
+        calibrated = max(0.70, ml_prob * 0.35 + 0.50 + (total_count / 15.0) * 0.12)
+        return min(0.78, calibrated)
     else:
-        # Uncomplicated malaria (mild symptoms only)
-        calibrated = min(0.38, ml_prob * 0.70 + (mild_count / 8.0) * 0.12)
+        # Uncomplicated malaria (mild symptoms only, no vital organ dysfunction)
+        calibrated = min(0.36, ml_prob * 0.50 + (mild_count / 8.0) * 0.12)
         return max(0.18, calibrated)
 
 @app.route('/predict', methods=['POST'])
@@ -195,11 +197,38 @@ def predict():
         l_item['clean_rule'] = clean_rule
         lime_explanations.append(l_item)
         
+    # Evaluate severe signs and clinical diagnosis
+    severe_markers = ['Convulsion', 'Anemia', 'jundice', 'cocacola_urine', 'hypoglycemia', 'prostraction', 'hyperpyrexia']
+    active_severe = [friendly_names[s] for s in severe_markers if patient_raw_df.iloc[0].get(s, 0) == 1]
+    active_symptoms_count = sum(patient_raw_df.iloc[0].get(s, 0) == 1 for s in raw_symptoms_list)
+    
+    if risk == "HIGH":
+        clinical_diagnosis = "Severe Malaria (High Risk / Critical Presentation)"
+        clinical_badge = "Severe Malaria (High Risk)"
+        clinical_recommendation = "Immediate Parenteral Artesunate (IV/IM) initiation. Urgent hospital admission and continuous vital organ monitoring per WHO Severe Malaria Guidelines."
+        triage_status = "EMERGENCY"
+    else:
+        if active_symptoms_count > 0:
+            clinical_diagnosis = "Uncomplicated Malaria (Low Risk of Severity)"
+            clinical_badge = "Uncomplicated Malaria (Low Risk)"
+            clinical_recommendation = "Prescribe oral Artemisinin-based Combination Therapy (ACT, e.g., Artemether-Lumefantrine) following laboratory confirmation. Outpatient observation."
+            triage_status = "STANDARD OUTPATIENT"
+        else:
+            clinical_diagnosis = "Asymptomatic Baseline (Low Risk)"
+            clinical_badge = "Baseline Assessment (Low Risk)"
+            clinical_recommendation = "No acute malarial manifestations reported. Continue standard vector control and preventative measures."
+            triage_status = "ROUTINE"
+            
     # Render results template
     result_data = {
         'age': patient_raw_df.iloc[0]['age'],
         'sex': 'Male' if patient_raw_df.iloc[0]['sex'] == 1 else 'Female',
         'raw_symptoms': {s: patient_raw_df.iloc[0][s] for s in raw_symptoms_list if patient_raw_df.iloc[0][s] == 1},
+        'active_severe_symptoms': active_severe,
+        'clinical_diagnosis': clinical_diagnosis,
+        'clinical_badge': clinical_badge,
+        'clinical_recommendation': clinical_recommendation,
+        'triage_status': triage_status,
         'probability': round(prob * 100, 1),
         'risk': risk,
         'threshold': round(threshold * 100, 1),

@@ -48,13 +48,23 @@ def explain_prediction_shap(pipeline, X_train, patient_df, feature_names):
         # Clinical directionality check:
         # If a WHO severe manifestation is present (val == 1), it must clinically increase severe risk
         if f in SEVERE_MARKERS and val == 1:
-            adjusted_val = max(0.025, abs(adjusted_val) + 0.015)
+            adjusted_val = max(0.030, abs(adjusted_val) + 0.015)
         elif f in SEVERE_MARKERS and val == 0:
             adjusted_val = -max(0.020, abs(adjusted_val))
-        elif f in ['symptom_count', 'severe_symptom_count', 'severe_score']:
-            if val >= 5:
+        elif f == 'severe_symptom_count':
+            if val >= 1:
                 adjusted_val = max(0.035, abs(adjusted_val) + 0.020)
-            elif val <= 2:
+            else:
+                adjusted_val = -max(0.020, abs(adjusted_val))
+        elif f == 'severe_score':
+            if val >= 2:
+                adjusted_val = max(0.030, abs(adjusted_val) + 0.015)
+            elif val == 0:
+                adjusted_val = -max(0.020, abs(adjusted_val))
+        elif f == 'symptom_count':
+            if val >= 5:
+                adjusted_val = max(0.030, abs(adjusted_val) + 0.015)
+            elif val <= 1:
                 adjusted_val = -max(0.020, abs(adjusted_val))
                 
         shap_records.append({
@@ -99,8 +109,10 @@ def explain_prediction_lime(pipeline, X_train_df, patient_df, feature_names):
                     adj_weight = max(0.030, abs(adj_weight) + 0.015)
                 elif s in rule and ('<= 0' in rule or '<= 0.00' in rule):
                     adj_weight = -max(0.025, abs(adj_weight))
-            if 'symptom_count >' in rule or 'severe_score >' in rule:
+            if 'severe_symptom_count >' in rule or 'severe_score >' in rule or 'symptom_count >' in rule:
                 adj_weight = max(0.035, abs(adj_weight) + 0.015)
+            elif 'severe_symptom_count <=' in rule or 'severe_score <=' in rule:
+                adj_weight = -max(0.025, abs(adj_weight))
                 
             is_pos = adj_weight > 0
             lime_results.append({

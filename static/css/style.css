@@ -761,3 +761,102 @@ h1, h2, h3, h4 {
 .model-meta-item strong {
     color: #ffffff;
 }
+
+/* Clinical Diagnosis & Triage Alert Banners */
+.clinical-diagnosis-banner {
+    margin-top: 20px;
+    padding: 16px 18px;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+    transition: all 0.25s ease;
+}
+
+.clinical-diagnosis-banner.alert-danger {
+    background: rgba(255, 71, 87, 0.08);
+    border: 1px solid rgba(255, 71, 87, 0.3);
+    box-shadow: 0 4px 20px rgba(255, 71, 87, 0.1);
+}
+
+.clinical-diagnosis-banner.alert-safe {
+    background: rgba(46, 213, 115, 0.08);
+    border: 1px solid rgba(46, 213, 115, 0.3);
+    box-shadow: 0 4px 20px rgba(46, 213, 115, 0.08);
+}
+
+.diagnosis-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.diagnosis-status-pill {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 3px 8px;
+    border-radius: 4px;
+}
+
+.alert-danger .diagnosis-status-pill {
+    background: rgba(255, 71, 87, 0.25);
+    color: #ff6b81;
+    border: 1px solid rgba(255, 71, 87, 0.4);
+}
+
+.alert-safe .diagnosis-status-pill {
+    background: rgba(46, 213, 115, 0.2);
+    color: #2ed573;
+    border: 1px solid rgba(46, 213, 115, 0.4);
+}
+
+.diagnosis-header h4 {
+    font-size: 15px;
+    font-weight: 700;
+    margin: 0;
+    color: #ffffff;
+}
+
+.diagnosis-recommendation {
+    font-size: 13px;
+    color: #cbd5e1;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.severe-manifestations-callout {
+    margin-top: 8px;
+    padding-top: 10px;
+    border-top: 1px dashed rgba(255, 71, 87, 0.25);
+}
+
+.callout-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #ff6b81;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    display: block;
+    margin-bottom: 6px;
+}
+
+.severe-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.severe-chip {
+    font-size: 11px;
+    font-weight: 600;
+    background: rgba(255, 71, 87, 0.2);
+    color: #ffb8b8;
+    border: 1px solid rgba(255, 71, 87, 0.4);
+    padding: 3px 10px;
+    border-radius: 20px;
+}
+
