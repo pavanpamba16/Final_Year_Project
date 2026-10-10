@@ -61,29 +61,37 @@ def explain_prediction_shap(pipeline, X_train, patient_df, feature_names):
 def explain_prediction_lime(pipeline, X_train_df, patient_df, feature_names):
     """
     Computes local LIME explanations for a patient prediction.
+    Returns structured list with rule, weight, direction, and percentage.
     """
-    scaler, model = get_pipeline_components(pipeline)
-    
-    # Scale training data and patient data
-    X_train_scaled = scaler.transform(X_train_df)
-    patient_scaled = scaler.transform(patient_df)
-    
-    explainer = lime.lime_tabular.LimeTabularExplainer(
-        training_data=X_train_scaled,
-        feature_names=feature_names,
-        class_names=['Non-Severe', 'Severe'],
-        mode='classification',
-        random_state=123
-    )
-    
-    # LIME explainer needs predict_proba from the model acting on scaled data
-    exp = explainer.explain_instance(
-        data_row=patient_scaled[0],
-        predict_fn=model.predict_proba,
-        num_features=10
-    )
-    
-    return exp.as_list()
+    try:
+        explainer = lime.lime_tabular.LimeTabularExplainer(
+            training_data=X_train_df.values,
+            feature_names=feature_names,
+            class_names=['Non-Severe', 'Severe'],
+            mode='classification',
+            random_state=123
+        )
+        patient_row = patient_df.iloc[0].values
+        exp = explainer.explain_instance(
+            data_row=patient_row,
+            predict_fn=pipeline.predict_proba,
+            num_features=8
+        )
+        lime_results = []
+        for rule, weight in exp.as_list():
+            is_pos = weight > 0
+            lime_results.append({
+                'rule': rule,
+                'weight': round(float(weight), 4),
+                'abs_weight': round(abs(float(weight)), 4),
+                'percent': round(abs(float(weight)) * 100, 1),
+                'direction': 'positive' if is_pos else 'negative',
+                'impact': 'Increases Risk' if is_pos else 'Decreases Risk'
+            })
+        return lime_results
+    except Exception as e:
+        print(f"LIME explanation error: {e}")
+        return []
 
 def generate_global_plots(pipeline, X_train, X_test, y_test, feature_names, output_dir):
     """Generates and saves global SHAP Beeswarm and Permutation Importance plots."""

@@ -8,7 +8,7 @@ from flask import Flask, request, render_template, jsonify
 # Add src to python path to import local modules
 sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
 from feature_engineering import MalariaFeatureEngineer
-from explain import explain_prediction_shap
+from explain import explain_prediction_shap, explain_prediction_lime
 
 app = Flask(__name__)
 
@@ -119,6 +119,14 @@ def predict():
         feature_names=feature_names
     )
     
+    # Run LIME Explainability
+    raw_lime = explain_prediction_lime(
+        pipeline=pipeline,
+        X_train_df=X_train_engineered,
+        patient_df=patient_eng_df,
+        feature_names=feature_names
+    )
+    
     # Re-map feature names to more user-friendly representations
     friendly_names = {
         'age': 'Age', 'sex': 'Gender (Male)', 'fever': 'Fever', 'cold': 'Cold/Chills',
@@ -140,6 +148,16 @@ def predict():
     for item in neg_contribs:
         item['friendly_name'] = friendly_names.get(item['feature'], item['feature'])
         
+    # Clean LIME rules with friendly names
+    lime_explanations = []
+    for l_item in raw_lime:
+        clean_rule = l_item['rule']
+        for raw_k, friendly_k in friendly_names.items():
+            if raw_k in clean_rule:
+                clean_rule = clean_rule.replace(raw_k, friendly_k)
+        l_item['clean_rule'] = clean_rule
+        lime_explanations.append(l_item)
+        
     # Render results template
     result_data = {
         'age': patient_raw_df.iloc[0]['age'],
@@ -150,6 +168,7 @@ def predict():
         'threshold': round(threshold * 100, 1),
         'positives': pos_contribs[:5], # Top 5 contributors
         'negatives': neg_contribs[:5], # Top 5 mitigators
+        'lime_explanations': lime_explanations[:6], # Top 6 LIME rules
         'model_name': model_package['version'],
         'model_metrics': model_package['metrics'],
         'date': model_package['date']

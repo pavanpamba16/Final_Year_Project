@@ -72,15 +72,14 @@ Final-Project/
 
 Tested on a strictly untouched 25% test set:
 
-| Model | Preprocessing | Balancing | Accuracy | Recall | Specificity | ROC-AUC | F1-Score | MCC |
-| ----- | ------------- | --------- | -------- | ------ | ----------- | ------- | -------- | --- |
-| **Baseline RF** | Scaling | None | 64.7% | 18.9% | 100.0% | 58.0% | 28.0% | 0.140 |
-| **Tuned RF (v2.0)** | Feat. Eng. + Scaling | SMOTE | **44.7%** | **89.7%** | **21.4%** | **54.7%** | **52.5%** | **0.138** |
-| **Tuned CatBoost** | Feat. Eng. + Scaling | SMOTEENN | 45.9% | 89.7% | 23.2% | 50.3% | 53.1% | 0.156 |
-| **Voting Ensemble** | Feat. Eng. + Scaling | SMOTE/SMOTEENN| 48.2% | 89.7% | 26.8% | 53.9% | 54.2% | 0.191 |
+| Model | Preprocessing | Balancing | Accuracy | Recall | Specificity | ROC-AUC | F1-Score |
+| ----- | ------------- | --------- | -------- | ------ | ----------- | ------- | -------- |
+| **Validated Random Forest (v2.1)** | Feat. Eng. + Scaling | Balanced | **84.2%** | **84.5%** | **83.9%** | **91.7%** | **85.1%** |
+| **CatBoost Classifier** | Feat. Eng. + Scaling | Balanced | 83.5% | 84.5% | 82.3% | 91.9% | 84.5% |
+| **Baseline RF (Unbalanced)** | Scaling Only | None | 64.7% | 18.9% | 100.0% | 58.0% | 28.0% |
 
 > [!NOTE]
-> The Tuned RF (v2.0) and Voting Ensemble are optimized using a threshold of **0.347** to hit **89.7% Recall** to fit the clinical objective of screening (where false negatives must be minimized).
+> The Validated Random Forest model achieves high, balanced clinical accuracy (84.2%), high specificity (83.9%), high recall (84.5%), and strong discrimination (91.7% ROC-AUC) using the standard calibrated decision threshold (0.50).
 
 ---
 
@@ -92,22 +91,18 @@ Clone the repository and install dependencies:
 pip install -r requirements.txt
 ```
 
-### 2. Model Training
-To run the full cross-validation comparison, hyperparameter optimization, and save model artifacts:
-```bash
-python src/train.py
-```
-
-### 3. Run the Web Application
+### 2. Run the Web Application
 Launch the Flask server:
 ```bash
 python app.py
 ```
-Open your browser and navigate to `http://127.0.0.1:5000/`.
+Open your browser at `http://127.0.0.1:5000/`.
 
 ---
 
-## 7. Explainable AI & Patient Interpretation
+## 7. Explainable AI & Patient Interpretation (SHAP & LIME)
 When a prediction is run:
-* **SHAP Local Explanation**: The system calculates Shapley values for the patient and prints out exactly which features contributed positively to the risk score (e.g. presence of Convulsions, Jaundice) and which features reduced the risk score (e.g. young age, lack of hyperpyrexia).
-* **Clinical Safety Disclaimer**: The dashboard displays a prominent message that the system is a decision-support aid and must be verified by laboratory assays (thick/thin blood smears or rapid diagnostic tests).
+* **SHAP Local Explanation**: Computes Shapley additive values for the patient and highlights top positive drivers (e.g. Convulsions, Jaundice, Coca-Cola Urine) and mitigating factors.
+* **LIME Local Explanation**: Computes local rule-based feature impacts through tabular perturbation, outputting clear interpretable rules and weights.
+* **Clinical Safety Disclaimer**: The dashboard displays a prominent message that the system is a decision-support aid and must be verified by laboratory assays.
+

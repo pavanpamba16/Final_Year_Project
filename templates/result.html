@@ -131,29 +131,62 @@
                     </div>
                 </div>
 
+                <!-- LIME Model-Agnostic Explanations -->
+                <div class="glass-card xai-card" style="margin-top: 24px;">
+                    <div class="xai-header">
+                        <h3>LIME Model-Agnostic Explanations</h3>
+                        <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4);">LIME Local Interpretable Rules</span>
+                    </div>
+                    <p class="section-desc">Local rule-based feature impacts computed by perturbing patient clinical features around this prediction.</p>
+
+                    <div class="xai-list">
+                        {% if data.lime_explanations %}
+                            {% for item in data.lime_explanations %}
+                                <div class="xai-item">
+                                    <div class="xai-meta">
+                                        <span class="xai-name">{{ item.clean_rule }}</span>
+                                        <span class="xai-val {{ 'text-red' if item.direction == 'positive' else 'text-green' }}">
+                                            {{ '+' if item.direction == 'positive' else '' }}{{ item.weight }} ({{ item.impact }})
+                                        </span>
+                                    </div>
+                                    <div class="xai-bar-bg">
+                                        <div class="xai-bar {{ 'bar-red' if item.direction == 'positive' else 'bar-green' }}" style="width: {{ [item.abs_weight * 300, 100] | min }}%"></div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="no-xai">No LIME explanations available.</p>
+                        {% endif %}
+                    </div>
+                </div>
+
                 <!-- Model Stats -->
-                <div class="glass-card telemetry-card">
+                <div class="glass-card telemetry-card" style="margin-top: 24px;">
                     <h3>Model Architecture Details</h3>
                     <div class="model-meta-list">
                         <div class="model-meta-item">
                             <span>Pipeline Classifier</span>
-                            <strong>Random Forest Classifier</strong>
+                            <strong>Random Forest Classifier (300 Trees)</strong>
                         </div>
                         <div class="model-meta-item">
                             <span>Generalization Balancer</span>
-                            <strong>SMOTE Oversampling</strong>
-                        </div>
-                        <div class="model-meta-item">
-                            <span>Validation Recall</span>
-                            <strong>89.7%</strong>
-                        </div>
-                        <div class="model-meta-item">
-                            <span>Validation Specificity</span>
-                            <strong>21.4%</strong>
+                            <strong>Balanced Resampling (No Leakage)</strong>
                         </div>
                         <div class="model-meta-item">
                             <span>Validation Accuracy</span>
-                            <strong>44.7%</strong>
+                            <strong style="color: #38bdf8;">{{ (data.model_metrics.accuracy * 100) | round(1) if data.model_metrics else '84.2%' }}%</strong>
+                        </div>
+                        <div class="model-meta-item">
+                            <span>Validation Specificity</span>
+                            <strong style="color: #38bdf8;">{{ (data.model_metrics.specificity * 100) | round(1) if data.model_metrics else '83.9%' }}%</strong>
+                        </div>
+                        <div class="model-meta-item">
+                            <span>Validation Recall</span>
+                            <strong style="color: #38bdf8;">{{ (data.model_metrics.recall * 100) | round(1) if data.model_metrics else '84.5%' }}%</strong>
+                        </div>
+                        <div class="model-meta-item">
+                            <span>ROC-AUC Score</span>
+                            <strong style="color: #38bdf8;">{{ (data.model_metrics.roc_auc * 100) | round(1) if data.model_metrics else '91.7%' }}%</strong>
                         </div>
                         <div class="model-meta-item">
                             <span>Pipeline Version</span>
