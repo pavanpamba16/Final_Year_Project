@@ -93,7 +93,9 @@ app = Flask(__name__)
 # Load models and training data for explainers
 MODEL_PATH = r"C:\Users\pamba\OneDrive\Desktop\Final-Project\models\improved\production_model.pkl"
 BASELINE_PATH = r"C:\Users\pamba\OneDrive\Desktop\Final-Project\models\baseline\baseline_rf.pkl"
-DATA_PATH = r"C:\Users\pamba\OneDrive\Desktop\Final-Project\data\Malaria-Data.csv"
+DATA_PATH = r"C:\Users\pamba\OneDrive\Desktop\Final-Project\data\MultiCohort_Malaria_Clinical_Data.csv"
+if not os.path.exists(DATA_PATH):
+    DATA_PATH = r"C:\Users\pamba\OneDrive\Desktop\Final-Project\data\Malaria-Data.csv"
 
 # Global references
 model_package = None
@@ -128,7 +130,7 @@ def load_resources():
     if os.path.exists(DATA_PATH):
         try:
             df = pd.read_csv(DATA_PATH)
-            X = df.drop(columns=['severe_maleria'])
+            X = df.drop(columns=['severe_maleria', 'cohort_source'], errors='ignore')
             fe = MalariaFeatureEngineer()
             X_train_engineered = fe.fit_transform(X)
             print(f"Loaded and engineered background data for explainers. Shape: {X_train_engineered.shape}")
@@ -404,4 +406,4 @@ def api_predict():
 
 if __name__ == '__main__':
     # Start the Flask app
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False)

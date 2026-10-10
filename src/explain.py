@@ -10,10 +10,19 @@ import lime.lime_tabular
 from sklearn.inspection import permutation_importance
 
 def get_pipeline_components(pipeline):
-    """Extracts scaler and classifier from the imblearn/sklearn pipeline."""
-    scaler = pipeline.named_steps['scaler']
-    model = pipeline.named_steps['model']
-    return scaler, model
+    """Extracts scaler and classifier from the imblearn/sklearn pipeline or ensemble."""
+    if hasattr(pipeline, 'named_steps'):
+        scaler = pipeline.named_steps.get('scaler', None)
+        model = pipeline.named_steps.get('model', pipeline)
+        return scaler, model
+    elif hasattr(pipeline, 'estimators_') and len(pipeline.estimators_) > 0:
+        # For fitted VotingClassifier or StackingClassifier, extract from constituent estimator
+        first_est = pipeline.estimators_[0]
+        return get_pipeline_components(first_est)
+    elif hasattr(pipeline, 'estimators') and len(pipeline.estimators) > 0:
+        first_est = pipeline.estimators[0][1]
+        return get_pipeline_components(first_est)
+    return None, pipeline
 
 SEVERE_MARKERS = ['Convulsion', 'Anemia', 'jundice', 'cocacola_urine', 'hypoglycemia', 'prostraction', 'hyperpyrexia']
 
@@ -23,8 +32,11 @@ def explain_prediction_shap(pipeline, X_train, patient_df, feature_names):
     """
     scaler, model = get_pipeline_components(pipeline)
     
-    # Scale patient data using the pipeline's fitted scaler
-    patient_scaled = scaler.transform(patient_df)
+    # Scale patient data using the pipeline's fitted scaler if available
+    if scaler is not None:
+        patient_scaled = scaler.transform(patient_df)
+    else:
+        patient_scaled = patient_df.values
     
     # Explainer based on the Random Forest / Tree model
     explainer = shap.TreeExplainer(model)

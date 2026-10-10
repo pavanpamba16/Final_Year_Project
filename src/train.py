@@ -28,10 +28,18 @@ from feature_engineering import MalariaFeatureEngineer
 from evaluate import calculate_metrics, optimize_threshold
 
 def load_data():
-    data_path = r"C:\Users\pamba\OneDrive\Desktop\Final-Project\data\Malaria-Data.csv"
+    multicohort_path = r"C:\Users\pamba\OneDrive\Desktop\Final-Project\data\MultiCohort_Malaria_Clinical_Data.csv"
+    if os.path.exists(multicohort_path):
+        data_path = multicohort_path
+    else:
+        data_path = r"C:\Users\pamba\OneDrive\Desktop\Final-Project\data\Malaria-Data.csv"
+        
     if not os.path.exists(data_path):
         raise FileNotFoundError(f"Dataset not found at {data_path}")
     df = pd.read_csv(data_path)
+    if 'cohort_source' in df.columns:
+        df = df.drop(columns=['cohort_source'])
+    print(f"Loaded clinical dataset from {data_path}. Total records: {len(df)}")
     return df
 
 def log_experiment(model_name, preprocessing, balancing, features, params, test_metrics, filepath="experiments.csv"):
