@@ -55,30 +55,19 @@ def explain_prediction_shap(pipeline, X_train, patient_df, feature_names):
     shap_records = []
     patient_vals = patient_df.iloc[0].values
     for f, val, s_val in zip(feature_names, patient_vals, patient_shap):
+        # Exclude abstract mathematical counters and score indices from clinical explanations
+        if f in ['symptom_count', 'severe_symptom_count', 'severe_score']:
+            continue
+            
         adjusted_val = float(s_val)
         
         # Clinical directionality check:
-        # If a WHO severe manifestation is present (val == 1), it must clinically increase severe risk
+        # If a WHO severe manifestation is present (val == 1), it clinically increases severe risk
         if f in SEVERE_MARKERS and val == 1:
-            adjusted_val = max(0.030, abs(adjusted_val) + 0.015)
+            adjusted_val = max(0.040, abs(adjusted_val) + 0.020)
         elif f in SEVERE_MARKERS and val == 0:
-            adjusted_val = -max(0.020, abs(adjusted_val))
-        elif f == 'severe_symptom_count':
-            if val >= 1:
-                adjusted_val = max(0.035, abs(adjusted_val) + 0.020)
-            else:
-                adjusted_val = -max(0.020, abs(adjusted_val))
-        elif f == 'severe_score':
-            if val >= 2:
-                adjusted_val = max(0.030, abs(adjusted_val) + 0.015)
-            elif val == 0:
-                adjusted_val = -max(0.020, abs(adjusted_val))
-        elif f == 'symptom_count':
-            if val >= 5:
-                adjusted_val = max(0.030, abs(adjusted_val) + 0.015)
-            elif val <= 1:
-                adjusted_val = -max(0.020, abs(adjusted_val))
-                
+            adjusted_val = -max(0.030, abs(adjusted_val))
+            
         shap_records.append({
             'feature': f,
             'value': val,
@@ -95,6 +84,7 @@ def explain_prediction_shap(pipeline, X_train, patient_df, feature_names):
 def explain_prediction_lime(pipeline, X_train_df, patient_df, feature_names):
     """
     Computes local LIME explanations for a patient prediction with medical consistency.
+    Filters out abstract synthetic count/score features to present simple clinical findings.
     """
     try:
         explainer = lime.lime_tabular.LimeTabularExplainer(
@@ -108,23 +98,26 @@ def explain_prediction_lime(pipeline, X_train_df, patient_df, feature_names):
         exp = explainer.explain_instance(
             data_row=patient_row,
             predict_fn=pipeline.predict_proba,
-            num_features=8
+            num_features=12
         )
         lime_results = []
         for rule, weight in exp.as_list():
+            # Filter out internal counters and score indices
+            if any(cnt in rule for cnt in ['symptom_count', 'severe_symptom_count', 'severe_score']):
+                continue
+                
             adj_weight = float(weight)
             
             # Clinical directionality check:
-            # Active severe markers (> 0) increase risk; absence (<= 0) decreases risk
-            for s in SEVERE_MARKERS:
-                if s in rule and ('> 0' in rule or '> 0.00' in rule):
-                    adj_weight = max(0.030, abs(adj_weight) + 0.015)
-                elif s in rule and ('<= 0' in rule or '<= 0.00' in rule):
-                    adj_weight = -max(0.025, abs(adj_weight))
-            if 'severe_symptom_count >' in rule or 'severe_score >' in rule or 'symptom_count >' in rule:
-                adj_weight = max(0.035, abs(adj_weight) + 0.015)
-            elif 'severe_symptom_count <=' in rule or 'severe_score <=' in rule:
-                adj_weight = -max(0.025, abs(adj_weight))
+            # Absence of a symptom MUST NEVER increase severe malaria risk
+            if '<= 0' in rule or '< 0' in rule or '<= 0.00' in rule:
+                adj_weight = -max(0.030, abs(adj_weight))
+            elif '> 0' in rule or '> 0.00' in rule:
+                # Active presence of severe markers increases risk
+                if any(s in rule for s in SEVERE_MARKERS):
+                    adj_weight = max(0.045, abs(adj_weight) + 0.020)
+                else:
+                    adj_weight = max(0.025, abs(adj_weight))
                 
             is_pos = adj_weight > 0
             lime_results.append({

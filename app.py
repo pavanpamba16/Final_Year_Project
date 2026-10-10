@@ -22,12 +22,12 @@ os.makedirs(SAMPLE_SMEARS_FOLDER, exist_ok=True)
 multimodal_engine = MalariaMultiModalEngine()
 
 def format_lime_rule(rule):
-    """Translates raw mathematical LIME inequalities into clean clinical descriptions."""
+    """Translates raw mathematical LIME inequalities into simple, clean clinical statements."""
     # Age categories
     if 'is_child' in rule:
-        return 'Pediatric (Age ≤ 12)' if ('>' in rule) else 'Adult (Age > 12)'
+        return 'Pediatric Patient (Age ≤ 12 yrs)' if ('>' in rule) else 'Adult Patient (Age > 12 yrs)'
     if 'is_elderly' in rule:
-        return 'Elderly (Age > 50)' if ('>' in rule) else 'Non-Elderly (Age ≤ 50)'
+        return 'Elderly Patient (Age > 50 yrs)' if ('>' in rule) else 'Non-Elderly Patient (Age ≤ 50 yrs)'
     if 'sex' in rule:
         return 'Male Patient' if ('>' in rule) else 'Female Patient'
     if 'age' in rule and not ('is_child' in rule or 'is_elderly' in rule):
@@ -37,43 +37,30 @@ def format_lime_rule(rule):
         m_age_single = re.search(r'age\s*(<=|<|>=|>)\s*([0-9.]+)', rule)
         if m_age_single:
             op_sym = '≤' if '<=' in m_age_single.group(1) else ('≥' if '>=' in m_age_single.group(1) else m_age_single.group(1))
-            return f"Age {op_sym} {int(float(m_age_single.group(2)))} yrs"
+            return f"Patient Age {op_sym} {int(float(m_age_single.group(2)))} yrs"
         return "Patient Age"
 
-    # Symptom counts and severity index
-    m_count = re.search(r'(symptom_count|severe_symptom_count|severe_score)\s*(<=|<|>=|>)\s*([0-9.]+)', rule)
-    if m_count:
-        var, op, val = m_count.groups()
-        val_int = int(float(val))
-        op_sym = '≤' if op == '<=' else ('≥' if op == '>=' else op)
-        label_map = {
-            'symptom_count': 'Total Manifestations',
-            'severe_symptom_count': 'WHO Severe Criteria Count',
-            'severe_score': 'Severity Score Index'
-        }
-        return f"{label_map.get(var, var)} {op_sym} {val_int}"
-
-    # Clinical features & interactions
+    # Clinical symptoms & features map
     feature_map = {
         'vomiting_diarrhea': 'Vomiting + Diarrhea Co-occurrence',
         'anemia_fatigue': 'Anemia + Fatigue Co-occurrence',
         'fever_headache': 'Fever + Headache Co-occurrence',
         'fever_rigor': 'Fever + Rigor Co-occurrence',
-        'cocacola_urine': 'Coca-Cola Urine (Hemoglobinuria)',
-        'prostraction': 'Prostration (Extreme Exhaustion)',
-        'hyperpyrexia': 'Hyperpyrexia',
-        'hypoglycemia': 'Hypoglycemia',
-        'bitter_tongue': 'Bitter Tongue',
+        'cocacola_urine': 'Dark Urine (Hemoglobinuria)',
+        'prostraction': 'Extreme Exhaustion (Prostration)',
+        'hyperpyrexia': 'High Fever (Hyperpyrexia ≥ 40°C)',
+        'hypoglycemia': 'Low Blood Sugar (Hypoglycemia)',
+        'bitter_tongue': 'Bitter Taste in Mouth',
         'Convulsion': 'Convulsions (Seizures)',
-        'jundice': 'Jaundice',
+        'jundice': 'Jaundice (Yellow Skin/Eyes)',
         'Anemia': 'Severe Anemia',
         'vomitting': 'Vomiting',
         'diarrhea': 'Diarrhea',
-        'fatigue': 'Fatigue',
+        'fatigue': 'Fatigue / Weakness',
         'headace': 'Headache',
         'fever': 'Fever',
         'cold': 'Cold / Chills',
-        'rigor': 'Rigors'
+        'rigor': 'Rigors (Shivering)'
     }
 
     # Match longer keys first
@@ -83,10 +70,13 @@ def format_lime_rule(rule):
             if '>' in rule:
                 return f"{name}: Present"
             elif '<=' in rule or '<' in rule:
-                return f"{name}: Absent"
+                return f"No {name} (Absent)"
             return name
 
-    return rule
+    # Clean any remaining inequality noise
+    clean = re.sub(r'[0-9.]+\s*(<=|<|>=|>)\s*', '', rule)
+    clean = re.sub(r'\s*(<=|<|>=|>)\s*[0-9.]+', '', clean)
+    return clean.replace('_', ' ').title()
 
 app = Flask(__name__)
 
