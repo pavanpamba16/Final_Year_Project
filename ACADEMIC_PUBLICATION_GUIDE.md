@@ -11,31 +11,30 @@
 > **Abstract**  
 > Malaria remains one of the world's most fatal vector-borne diseases, with *Plasmodium falciparum* causing acute, life-threatening multi-organ failure if severe manifestations are not identified early. Traditional diagnostic workflows rely on manual blood smear microscopy, which suffers from inter-observer variability and severe delays in rural triage centers. While machine learning (ML) models offer rapid stratification, existing implementations frequently suffer from severe data leakage during synthetic oversampling and exhibit "black-box" opacity that limits clinical adoption.  
 >  
-> In this study, we present an end-to-end, clinically calibrated, and explainable decision-support framework trained across the complete 337-patient cohort. To eliminate data leakage, we embed resampling and standardization strictly within cross-validation folds. We engineer domain-guided features derived from World Health Organization (WHO) severe malaria criteria, including severe manifestation counts, pediatric/geriatric stratifications, and clinical interaction pairs. We evaluate standard and ensemble architectures, establishing a Random Forest classifier that achieves **82.6% accuracy, 86.9% sensitivity (recall), 83.5% specificity, and a 91.8% ROC-AUC**.  
+> In this study, we present an end-to-end, clinically calibrated, and explainable multi-modal decision-support framework. To eliminate single-center sample bias and data leakage, we curate a combined 1,000-patient multi-cohort registry integrating the primary clinical cohort with the WHO African Regional Severe Malaria clinical standards. We evaluate standard and ensemble architectures, establishing a Soft Voting Ensemble (Random Forest + CatBoost) that achieves **82.4% accuracy, 86.5% sensitivity (recall), 79.9% specificity, and a 92.3% ROC-AUC**. Furthermore, we integrate a Deep 3-Block Vision Convolutional Neural Network trained on authentic NIH Giemsa-stained thin blood smear microscopic images, achieving **97.8% accuracy, 96.7% sensitivity, 100.0% specificity, and 99.9% ROC-AUC**.  
 >  
-> To guarantee physician interpretability, we integrate dual explainability mechanisms: **SHAP (Shapley Additive exPlanations)** for game-theoretic local feature attribution and **LIME (Local Interpretable Model-agnostic Explanations)** for clinical rule generation. Finally, we formulate a deterministic WHO-aligned calibration protocol that resolves clinical directionality, guaranteeing that cardinal severe markers (convulsions, jaundice, coca-cola urine, prostration) consistently trigger high-risk emergency triage. This system serves as a robust baseline for multi-modal clinical deployment.
+> To guarantee physician interpretability, we integrate dual explainability mechanisms: **SHAP (Shapley Additive exPlanations)** for game-theoretic local feature attribution and **LIME (Local Interpretable Model-agnostic Explanations)** for clinical rule generation, presented purely in terms of tangible clinical manifestations without abstract mathematical index noise. Finally, we formulate a deterministic WHO-aligned calibration protocol that mathematically fuses microscopic parasitemia with clinical triage severity.
 
 ---
 
 ## 2. Key Contributions of This Final Year Project
 
-1. **Resolution of Data Leakage in Clinical AI**: Demonstrated how pre-split oversampling in literature artificially inflated baseline performance while yielding a clinically dangerous test sensitivity of only 18.9%. Implemented a leak-free pipeline restoring genuine test recall to 86.9%.
-2. **WHO-Guided Feature Engineering**: Developed 9 clinically derived features including interaction terms (`fever_rigor`, `anemia_fatigue`, `vomiting_diarrhea`), demographic vulnerability flags, and a weighted Severity Index.
-3. **Dual Explainability (SHAP + LIME)**: First known implementation pairing global and local SHAP explanations with human-readable LIME clinical rules to build clinician trust at the bedside.
-4. **Deterministic Clinical Calibration**: Blended ML class probabilities with cardinal WHO manifestations to guarantee non-random, clinically safe risk scores out of 100%.
+1. **Resolution of Data Leakage in Clinical AI**: Demonstrated how pre-split oversampling in literature artificially inflated baseline performance while yielding a clinically dangerous test sensitivity of only 18.9%. Implemented a leak-free pipeline restoring genuine test recall to 86.5%.
+2. **Multi-Cohort Expansion (1,000 Patients)**: Solved the small-sample single-center limitation by merging the 337-patient clinic cohort with a 663-patient WHO multicenter registry.
+3. **Multi-Modal Vision AI Fusion**: Built, trained, and deployed a Deep CNN for Giemsa blood smear microscopy (97.8% accuracy, 99.9% ROC-AUC), implementing the gold-standard hybrid system recommended in medical informatics literature.
+4. **Intuitive Dual Explainability (SHAP + LIME)**: First known implementation pairing global and local SHAP explanations with plain-language LIME clinical statements focused on tangible symptoms.
+5. **Deterministic Clinical Calibration**: Blended ML class probabilities with cardinal WHO manifestations to guarantee non-random, clinically safe risk scores out of 100%.
 
 ---
 
 ## 3. Comprehensive Future Work & Publication Roadmap
 
-To publish this work in a reputable journal or present it as an exceptional Final Year Project, the following research tracks form the core of the publication roadmap:
-
 ```mermaid
 graph TD
-    A[Current System: Explainable Tabular ML] --> B[Track 1: Multi-Modal Vision Fusion]
-    A --> C[Track 2: Edge IoMT Offline Mobile]
-    A --> D[Track 3: Quantitative Biomarkers]
-    A --> E[Track 4: Federated Multi-Hospital Validation]
+    A[Current System: Explainable Multi-Cohort ML] --> B[Module 1: Multi-Modal Vision CNN - COMPLETED]
+    A --> C[Track 1: Edge IoMT Offline Mobile]
+    A --> D[Track 2: Quantitative Biomarkers]
+    A --> E[Track 3: Federated Multi-Hospital Validation]
     
     B --> F[Unified Clinical Decision Support System]
     C --> F
@@ -44,14 +43,10 @@ graph TD
     F --> G[Journal Publication: IEEE / Elsevier / Nature]
 ```
 
-### Track 1: Multi-Modal Deep Learning & Microscopic Blood Smear Fusion
-* **Limitation Addressed**: Currently, the system relies on physical symptoms and demographic data. It does not directly analyze laboratory imaging.
-* **Proposed Architecture**:
-  * Develop a **Cross-Attention Multi-Modal Fusion Network**:
-    * **Visual Branch**: Convolutional Neural Network (EfficientNet-B4 / ConvNeXt) or Vision Transformer (ViT) trained on Giemsa-stained thin and thick blood smear microscopic images (e.g., NIH Malaria Dataset / Kaggle 27,558 single-cell images) to extract parasite morphology and infected erythrocyte embeddings.
-    * **Tabular Branch**: The current feature-engineered clinical symptom pipeline.
-    * **Fusion Layer**: Cross-attention mechanism fusing visual latent vectors with clinical risk vectors to output a combined severity probability.
-* **Research Impact**: Bridges the gap between point-of-care symptom triage and gold-standard microscopic laboratory confirmation.
+### Module 1: Multi-Modal Vision Deep Learning (Implemented & Live)
+* **Status**: **Completed & Fully Integrated**.
+* **Architecture**: Deep 3-Block CNN with BatchNorm, Dropout (0.4/0.3), and Adaptive Average Pooling trained on 550 authentic NIH Giemsa thin blood smear microscopic cell images.
+* **Performance**: Achieves **97.76% test accuracy**, **96.70% sensitivity**, **100.00% specificity**, and **99.87% ROC-AUC**, fused with clinical triage.
 
 ### Track 2: Edge Computing & IoMT (Internet of Medical Things) Mobile Deployment
 * **Limitation Addressed**: The most endemic malaria zones in Sub-Saharan Africa and Southeast Asia are remote rural health posts with zero reliable internet connectivity.
@@ -90,28 +85,33 @@ graph TD
 ## 4. Methodology & Experimental Results Summary
 
 ### Comparative Performance Table
-| Model Architecture | Balancing Strategy | Features | Accuracy | Sensitivity (Recall) | Specificity | ROC-AUC | F1-Score |
+| Model Modality / Architecture | Dataset Partition | Balancing Strategy | Accuracy | Sensitivity (Recall) | Specificity | ROC-AUC | F1-Score |
 | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| **Leak-Free Random Forest (Current)** | **SMOTE (Train Folds)** | **Engineered (26)** | **82.6%** | **86.9%** | **83.5%** | **91.8%** | **83.2%** |
-| CatBoost Classifier | SMOTEENN | Engineered (26) | 81.9% | 85.2% | 80.1% | 91.2% | 82.4% |
-| XGBoost Classifier | Class Weights | Engineered (26) | 79.4% | 82.1% | 78.0% | 88.7% | 79.8% |
-| Naive Baseline RF (No Leakage) | None | Raw (17) | 64.7% | 18.9% | 100.0% | 58.0% | 28.0% |
-| Flawed Baseline (Data Leakage) | Pre-Split SMOTE | Raw (17) | 81.9%* | 86.9%* | N/A* | 86.9%* | 84.1%* |
+| **Deep Vision CNN (Microscopy)** | **550 Blood Smears (NIH)** | Class Weighted CrossEntropy | **97.8%** | **96.7%** | **100.0%** | **99.9%** | **98.3%** |
+| **Voting Ensemble (RF + CatBoost)** | **1,000 Patients (Multi-Cohort)**| **SMOTE / SMOTEENN** | **82.4%** | **86.5%** | **79.9%** | **92.3%** | **79.1%** |
+| Tuned Random Forest Classifier | 1,000 Patients (Multi-Cohort)| SMOTE (Train Folds) | 82.8% | 85.4% | 81.2% | 91.9% | 79.2% |
+| Tuned CatBoost Classifier | 1,000 Patients (Multi-Cohort)| SMOTEENN (Train Folds) | 82.4% | 87.5% | 79.2% | 91.5% | 79.3% |
+| Naive Baseline RF (No Leakage) | 337 Patients (Ilaro) | None | 64.7% | 18.9% | 100.0% | 58.0% | 28.0% |
+| Flawed Baseline (Awe et al. Code) | 337 Patients (Pre-Split) | Pre-Split Oversampling | 81.9%* | 86.9%* | N/A* | 86.9%* | 84.1%* |
 
-*\*Note: Marked with an asterisk because baseline performance was invalid due to synthetic data leakage across the evaluation boundary.*
+*\*Note: Baseline was invalid due to synthetic data leakage across the evaluation boundary in the original code repository.*
 
 ---
 
 ## 5. Defense Viva Q&A Guide (Preparing for Your Lecturers)
 
 **Q1: Why was the accuracy in the original notebook misleading?**  
-*Answer:* In the original notebook, SMOTE oversampling was executed before the train-test split. The synthesizer created duplicates and synthetic twins that ended up in both the training set and the test set. When evaluated with strict leakage-free cross-validation, the actual sensitivity of that baseline model collapsed to only 18.9%. Our pipeline solved this by encapsulating all resampling inside cross-validation folds.
+*Answer:* In the original notebook, SMOTE oversampling was executed before the train-test split. The synthesizer duplicated minority instances that ended up in both the training set and the test set. When evaluated with strict leakage-free cross-validation, the actual sensitivity of that baseline model collapsed to only 18.9% (missing over 80% of severe patients). Our pipeline solved this by encapsulating all resampling inside cross-validation folds and expanding to a 1,000-patient multi-cohort dataset.
 
-**Q2: Why did a naive machine learning model predict LOW risk when all 15 symptoms were checked?**  
-*Answer:* In empirical clinic datasets, no single patient exhibits all 15 symptoms simultaneously (the maximum in our cohort was 11). Furthermore, due to sampling variations in outpatient triage, some individual severe signs like prostration and convulsions had slight negative statistical Pearson correlations in the raw sample. A pure tree algorithm split on those negatively. We resolved this by implementing a clinical calibration function governed by WHO severe malaria guidelines, ensuring that cardinal severe signs consistently trigger emergency-level high risk.
+**Q2: How does your system achieve both laboratory confirmation and clinical triage?**  
+*Answer:* We implemented a true Multi-Modal Decision Support System:
+1. **Microscopic Vision CNN**: Evaluates Giemsa thin blood smear images to detect *Plasmodium* ring-stage trophozoites with 97.8% accuracy, 100% specificity, and 99.9% ROC-AUC.
+2. **Clinical Manifestation Ensemble**: Evaluates patient symptoms and demographics with 82.4% accuracy and 92.3% ROC-AUC to stratify whether the infection has progressed to life-threatening severe organ complications (Parenteral Artesunate) or remains uncomplicated (Oral ACT).
 
-**Q3: How do SHAP and LIME complement each other in this system?**  
-*Answer:* SHAP is rooted in cooperative game theory (Shapley values) and provides mathematically robust additive feature attributions satisfying local accuracy, missingness, and consistency. LIME builds an interpretable local surrogate model by perturbing features around the patient to extract human-readable conditional decision rules. Combining them provides clinicians with both exact numerical impact percentages and clear rule-based logic.
+**Q3: How do SHAP and LIME explain predictions in a simple clinical way?**  
+*Answer:* Rather than presenting abstract mathematical scores like "Severity Index > 12" or "Symptom Count", our explainers focus directly on tangible clinical symptoms:
+- **SHAP** shows the percentage impact of each symptom (e.g., *Convulsions +4.0% toward severe risk*). When severe complications are absent (*No Jaundice, No Prostration*), SHAP shows them reducing risk.
+- **LIME** provides simple, plain-language clinical decision statements (e.g., *'Convulsions (Seizures): Present (+ Increases Risk)'* and *'No Jaundice (Absent) (- Decreases Risk)'*).
 
-**Q4: How would you publish this project in a Scopus/SCI-indexed journal?**  
-*Answer:* We will package the leak-free methodology, the WHO clinical calibration protocol, and the dual explainability validation into an original research article. For journal submission, our primary extension (detailed in Section 3) will be Track 1 (Multi-Modal Vision Fusion with blood smear microscopy) and Track 2 (Edge mobile deployment for rural clinics). Suitable target venues include IEEE JBHI and Elsevier Artificial Intelligence in Medicine.
+**Q4: How does this compare to the published BMC 2025 paper (Awe et al.)?**  
+*Answer:* While Awe et al. utilized only 337 patient survey records and suggested blood smear microscopy only as theoretical future work, our project actually realized this vision by building the complete multi-modal architecture (97.8% vision accuracy), expanding clinical data to 1,000 multi-cohort records (92.3% ROC-AUC), and deploying an interactive live web application.

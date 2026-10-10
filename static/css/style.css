@@ -685,16 +685,22 @@ h1, h2, h3, h4 {
 .xai-meta {
     display: flex;
     justify-content: space-between;
+    align-items: center;
+    gap: 12px;
     font-size: 12px;
 }
 
 .xai-name {
     color: var(--text-primary);
+    word-break: break-word;
+    flex: 1;
 }
 
 .xai-val {
     font-family: monospace;
     font-weight: bold;
+    white-space: nowrap;
+    text-align: right;
 }
 
 .text-red {

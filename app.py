@@ -70,7 +70,8 @@ def format_lime_rule(rule):
             if '>' in rule:
                 return f"{name}: Present"
             elif '<=' in rule or '<' in rule:
-                return f"No {name} (Absent)"
+                short_name = name.split('(')[0].strip()
+                return f"No {short_name} (Absent)"
             return name
 
     # Clean any remaining inequality noise
@@ -241,12 +242,14 @@ def predict():
         feature_names=feature_names
     )
     
+    severe_markers = ['Convulsion', 'Anemia', 'jundice', 'cocacola_urine', 'hypoglycemia', 'prostraction', 'hyperpyrexia']
+    
     # Re-map feature names to more user-friendly representations
     friendly_names = {
         'age': 'Age', 'sex': 'Gender (Male)', 'fever': 'Fever', 'cold': 'Cold/Chills',
         'rigor': 'Rigors (Shivering)', 'fatigue': 'Fatigue/Weakness', 'headace': 'Headache',
         'bitter_tongue': 'Bitter Tongue', 'vomitting': 'Vomiting', 'diarrhea': 'Diarrhea',
-        'Convulsion': 'Convulsions', 'Anemia': 'Anemia', 'jundice': 'Jaundice',
+        'Convulsion': 'Convulsions', 'Anemia': 'Severe Anemia', 'jundice': 'Jaundice',
         'cocacola_urine': 'Coca-Cola Urine (Hemoglobinuria)', 'hypoglycemia': 'Hypoglycemia',
         'prostraction': 'Prostration (Extreme Exhaustion)', 'hyperpyrexia': 'Hyperpyrexia (Extremely High Fever)',
         'is_child': 'Is Child (<= 12 years)', 'is_elderly': 'Is Elderly (> 50 years)',
@@ -256,11 +259,22 @@ def predict():
         'severe_score': 'Symptom Severity Index'
     }
     
-    # Convert lists to human-friendly versions
+    # Convert lists to clear clinical descriptions
     for item in pos_contribs:
-        item['friendly_name'] = friendly_names.get(item['feature'], item['feature'])
+        base_name = friendly_names.get(item['feature'], item['feature'])
+        if item.get('value', 1) == 1 and item['feature'] in severe_markers:
+            item['friendly_name'] = f"{base_name} (Present)"
+        else:
+            item['friendly_name'] = base_name
+            
     for item in neg_contribs:
-        item['friendly_name'] = friendly_names.get(item['feature'], item['feature'])
+        base_name = friendly_names.get(item['feature'], item['feature'])
+        if item.get('value', 0) == 0:
+            # Clean up nested parentheses if already present
+            clean_name = base_name.split('(')[0].strip()
+            item['friendly_name'] = f"No {clean_name} (Absent)"
+        else:
+            item['friendly_name'] = base_name
         
     # Clean LIME rules into readable clinical terminology
     lime_explanations = []
@@ -269,7 +283,6 @@ def predict():
         lime_explanations.append(l_item)
         
     # Evaluate severe signs and clinical diagnosis
-    severe_markers = ['Convulsion', 'Anemia', 'jundice', 'cocacola_urine', 'hypoglycemia', 'prostraction', 'hyperpyrexia']
     active_severe = [friendly_names[s] for s in severe_markers if patient_raw_df.iloc[0].get(s, 0) == 1]
     active_symptoms_count = sum(patient_raw_df.iloc[0].get(s, 0) == 1 for s in raw_symptoms_list)
     
