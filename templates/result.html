@@ -29,17 +29,39 @@
                     
                     <!-- Glow Gauge Card -->
                     <div class="risk-gauge-box">
-                        <div class="gauge-ring {% if data.risk == 'HIGH' %}high-risk-ring{% else %}low-risk-ring{% endif %}">
+                        <div class="gauge-ring {% if data.risk == 'HIGH' %}high-risk-ring{% else %}low-risk-ring{% endif %}"
+                             style="background: radial-gradient(#0b132b 64%, transparent 65%), conic-gradient({% if data.risk == 'HIGH' %}#ff4757{% else %}#00e5ff{% endif %} 0% {{ data.probability }}%, rgba(255, 255, 255, 0.08) {{ data.probability }}% 100%); box-shadow: 0 0 25px {% if data.risk == 'HIGH' %}rgba(255, 71, 87, 0.25){% else %}rgba(0, 229, 255, 0.25){% endif %};">
                             <span class="probability-display">{{ data.probability }}%</span>
-                            <span class="probability-sub">Severe Risk Score</span>
+                            <span class="probability-out-of" style="color: {% if data.risk == 'HIGH' %}#ff6b81{% else %}#00e5ff{% endif %}; font-size: 13px; font-weight: 700; margin-top: 2px;">{{ data.probability }} / 100%</span>
+                            <span class="probability-sub" style="font-size: 10px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px;">Severe Risk Score</span>
                         </div>
                         
                         <div class="risk-badge {% if data.risk == 'HIGH' %}badge-high{% else %}badge-low{% endif %}">
                             Risk Level: {{ data.risk }}
                         </div>
+
+                        <!-- Linear visual scale out of 100% -->
+                        <div style="width: 100%; max-width: 260px; margin-top: 10px;">
+                            <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-secondary); margin-bottom: 5px;">
+                                <span>Score: <strong style="color: #fff;">{{ data.probability }} / 100%</strong></span>
+                                <span>Cutoff: <strong style="color: #fff;">{{ data.threshold }} / 100%</strong></span>
+                            </div>
+                            <div style="width: 100%; height: 7px; background: rgba(255, 255, 255, 0.08); border-radius: 4px; overflow: hidden; position: relative;">
+                                <div style="height: 100%; width: {{ data.probability }}%; background: {% if data.risk == 'HIGH' %}linear-gradient(90deg, #ff4757, #ff6b81){% else %}linear-gradient(90deg, #00e5ff, #4facfe){% endif %}; border-radius: 4px;"></div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 9px; color: var(--text-secondary); margin-top: 3px;">
+                                <span>0%</span>
+                                <span>50%</span>
+                                <span>100%</span>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="telemetry-grid">
+                        <div class="metric-item">
+                            <span class="metric-label">Severe Risk Score</span>
+                            <span class="metric-value" style="color: {% if data.risk == 'HIGH' %}#ff6b81{% else %}#00e5ff{% endif %};">{{ data.probability }} / 100%</span>
+                        </div>
                         <div class="metric-item">
                             <span class="metric-label">Patient Age</span>
                             <span class="metric-value">{{ data.age }} years</span>
@@ -50,7 +72,7 @@
                         </div>
                         <div class="metric-item">
                             <span class="metric-label">Model Threshold</span>
-                            <span class="metric-value font-mono">{{ data.threshold }}%</span>
+                            <span class="metric-value font-mono">{{ data.threshold }} / 100%</span>
                         </div>
                     </div>
 

@@ -530,39 +530,27 @@ h1, h2, h3, h4 {
 
 /* circular gauge ring */
 .gauge-ring {
-    width: 180px;
-    height: 180px;
+    width: 190px;
+    height: 190px;
     border-radius: 50%;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.02);
-    border: 8px solid rgba(255, 255, 255, 0.03);
     position: relative;
+    box-sizing: border-box;
 }
 
 .gauge-ring::before {
-    content: "";
-    position: absolute;
-    top: -8px;
-    left: -8px;
-    right: -8px;
-    bottom: -8px;
-    border-radius: 50%;
-    border: 8px solid transparent;
+    display: none;
 }
 
 .high-risk-ring {
-    border-top-color: var(--red-glow);
-    border-right-color: var(--red-glow);
-    box-shadow: inset 0 0 20px rgba(255, 71, 87, 0.1), 0 0 20px rgba(255, 71, 87, 0.1);
+    border: 2px solid rgba(255, 71, 87, 0.4);
 }
 
 .low-risk-ring {
-    border-top-color: var(--cyan-glow);
-    border-right-color: var(--cyan-glow);
-    box-shadow: inset 0 0 20px rgba(0, 229, 255, 0.1), 0 0 20px rgba(0, 229, 255, 0.1);
+    border: 2px solid rgba(0, 229, 255, 0.4);
 }
 
 .probability-display {
