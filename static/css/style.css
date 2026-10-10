@@ -860,3 +860,82 @@ h1, h2, h3, h4 {
     border-radius: 20px;
 }
 
+/* Academic Future Scope Card */
+.future-work-card {
+    background: rgba(15, 23, 42, 0.65);
+    border: 1px solid rgba(56, 189, 248, 0.15);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+.future-work-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.future-work-icon {
+    font-size: 18px;
+}
+
+.future-work-header h3 {
+    font-size: 15px;
+    color: #e2e8f0;
+    margin: 0;
+}
+
+.future-work-list {
+    list-style: none;
+    padding: 0;
+    margin: 12px 0 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.future-work-list li {
+    font-size: 12px;
+    color: #94a3b8;
+    line-height: 1.5;
+    position: relative;
+    padding-left: 14px;
+}
+
+.future-work-list li::before {
+    content: "•";
+    color: #38bdf8;
+    position: absolute;
+    left: 0;
+    font-weight: bold;
+}
+
+.future-work-list li strong {
+    color: #f1f5f9;
+}
+
+/* Print Styles for Academic Reporting */
+@media print {
+    body {
+        background: #ffffff !important;
+        color: #000000 !important;
+    }
+    .glow-bg, .app-header, .result-actions, .btn-secondary {
+        display: none !important;
+    }
+    .layout-grid {
+        display: block !important;
+    }
+    .glass-card {
+        background: #ffffff !important;
+        border: 1px solid #cccccc !important;
+        box-shadow: none !important;
+        color: #000000 !important;
+        margin-bottom: 20px !important;
+        break-inside: avoid;
+    }
+    .metric-value, .gauge-ring span, h1, h2, h3, h4, strong {
+        color: #000000 !important;
+    }
+}
+
+

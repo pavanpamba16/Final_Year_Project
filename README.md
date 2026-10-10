@@ -103,6 +103,24 @@ Open your browser at `http://127.0.0.1:5000/`.
 ## 7. Explainable AI & Patient Interpretation (SHAP & LIME)
 When a prediction is run:
 * **SHAP Local Explanation**: Computes Shapley additive values for the patient and highlights top positive drivers (e.g. Convulsions, Jaundice, Coca-Cola Urine) and mitigating factors.
-* **LIME Local Explanation**: Computes local rule-based feature impacts through tabular perturbation, outputting clear interpretable rules and weights.
-* **Clinical Safety Disclaimer**: The dashboard displays a prominent message that the system is a decision-support aid and must be verified by laboratory assays.
+* **LIME Local Explanation**: Computes local rule-based feature impacts through tabular perturbation, outputting clear interpretable rules and weights in plain clinical terminology.
+
+---
+
+## 8. Future Work & Academic Publication Scope (Final Year Project)
+For academic paper publication (e.g., IEEE JBHI, Elsevier AIIM, Nature Sci Rep) and final year project defense, the following research extensions are outlined:
+
+1. **Multi-Modal Deep Learning & Blood Smear Microscopy Fusion**:
+   - Developing a dual-branch neural architecture combining tabular symptom embeddings with Convolutional Neural Networks (ConvNeXt / EfficientNet) or Vision Transformers (ViT) trained on Giemsa-stained thin/thick microscopic blood smear images.
+2. **Edge Computing & IoMT Offline Mobile Deployment**:
+   - Applying INT8 post-training quantization to export models to ONNX and TFLite formats for offline mobile diagnostic execution on low-cost Android smartphones in remote rural clinics without internet connectivity.
+3. **Point-of-Care (PoC) Quantitative Biomarker Telemetry**:
+   - Expanding input parameters to continuous quantitative biomarkers (Parasite density per $\mu\text{L}$, hemoglobin levels, blood lactate, and automated lateral-flow RDT optical strip densitometry).
+4. **Federated Learning & Cross-Cohort Multi-Hospital Validation**:
+   - Implementing privacy-preserving Federated Learning (FedAvg with Differential Privacy) across multi-center international hospital registries to validate generalizability across diverse endemic zones.
+5. **Electronic Health Record (EHR) & HL7 FHIR Interoperability**:
+   - Exposing certified HL7 FHIR APIs to seamlessly integrate automated severe malaria alerts directly into hospital triage systems.
+
+> For the comprehensive thesis abstract, mathematical formulation, defense viva Q&A cheatsheet, and journal submission guide, see [ACADEMIC_PUBLICATION_GUIDE.md](ACADEMIC_PUBLICATION_GUIDE.md).
+
 

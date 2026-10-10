@@ -16,7 +16,7 @@
         <header class="app-header">
             <div class="logo">
                 <span class="pulse-icon"></span>
-                <h1>Malaria Risk Analytics Suite <span class="badge">v2.0</span></h1>
+                <h1>Malaria Risk Analytics Suite</h1>
             </div>
             <p class="subtitle">Diagnostic Telemetry & Explainable AI Risk Report</p>
         </header>
@@ -116,6 +116,14 @@
                             </svg>
                             <span>New Risk Assessment</span>
                         </a>
+                        <button onclick="window.print()" class="btn-secondary" style="background: rgba(255, 255, 255, 0.05); cursor: pointer;">
+                            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                                <rect x="6" y="14" width="12" height="8"></rect>
+                            </svg>
+                            <span>Print Academic Report</span>
+                        </button>
                     </div>
                 </div>
             </main>
@@ -176,7 +184,6 @@
                 <div class="glass-card xai-card" style="margin-top: 24px;">
                     <div class="xai-header">
                         <h3>LIME Model-Agnostic Explanations</h3>
-                        <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4);">LIME Local Interpretable Rules</span>
                     </div>
                     <p class="section-desc">Local rule-based feature impacts computed by perturbing patient clinical features around this prediction.</p>
 
@@ -210,10 +217,6 @@
                             <strong>Random Forest Classifier</strong>
                         </div>
                         <div class="model-meta-item">
-                            <span>Dataset Training Coverage</span>
-                            <strong style="color: #34d399;">100% (337 Patients / 442 SMOTE Profiles)</strong>
-                        </div>
-                        <div class="model-meta-item">
                             <span>Generalization Balancer</span>
                             <strong>SMOTE Oversampling</strong>
                         </div>
@@ -234,6 +237,20 @@
                             <strong style="color: #38bdf8;">{{ (data.model_metrics.roc_auc * 100) | round(1) if data.model_metrics else '91.8' }}%</strong>
                         </div>
                     </div>
+                </div>
+
+                <!-- Academic Publication Future Scope -->
+                <div class="glass-card future-work-card" style="margin-top: 24px;">
+                    <div class="future-work-header">
+                        <span class="future-work-icon">🎓</span>
+                        <h3>Final Year Project Publication Scope</h3>
+                    </div>
+                    <p class="section-desc">Key research tracks for academic publication:</p>
+                    <ul class="future-work-list">
+                        <li><strong>Multi-Modal Vision:</strong> Cross-attentive fusion of Giemsa blood smear microscopy with tabular symptoms.</li>
+                        <li><strong>Edge Optimization:</strong> INT8 model quantization for offline rural clinic deployment.</li>
+                        <li><strong>Federated Learning:</strong> Multi-center cohort validation with differential privacy.</li>
+                    </ul>
                 </div>
             </aside>
         </div>

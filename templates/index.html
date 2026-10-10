@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Malaria Risk Analytics Suite (v2.0)</title>
+    <title>Malaria Risk Analytics Suite</title>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
@@ -16,7 +16,7 @@
         <header class="app-header">
             <div class="logo">
                 <span class="pulse-icon"></span>
-                <h1>Malaria Risk Analytics Suite <span class="badge">v2.0</span></h1>
+                <h1>Malaria Risk Analytics Suite</h1>
             </div>
             <p class="subtitle">Explainable ML-based clinical decision support tool for severe malaria risk assessment</p>
         </header>
@@ -49,7 +49,7 @@
 
                     <div class="telemetry-footer">
                         <span class="status-indicator online"></span>
-                        <span>100% Records Trained (337 Cohort)</span>
+                        <span>Production Pipeline Active</span>
                     </div>
                 </div>
 
@@ -62,9 +62,27 @@
                     </ul>
                 </div>
 
-                <div class="glass-card disclaimer-card">
-                    <h3>⚠️ Medical Disclaimer</h3>
-                    <p>This is a machine learning-based decision-support system intended for educational and clinical research purposes only. It does not replace professional medical diagnosis, laboratory blood smears, or clinical trials.</p>
+                <!-- Academic Research & Future Work Roadmap -->
+                <div class="glass-card future-work-card">
+                    <div class="future-work-header">
+                        <span class="future-work-icon">🔬</span>
+                        <h3>Future Scope & Academic Publication</h3>
+                    </div>
+                    <p class="section-desc">Research extensions for final year publication:</p>
+                    <ul class="future-work-list">
+                        <li>
+                            <strong>Multi-Modal Vision Fusion:</strong> Integrating Giemsa blood smear microscopy images with tabular clinical symptoms using Vision Transformers.
+                        </li>
+                        <li>
+                            <strong>Edge IoMT Deployment:</strong> Quantizing the explainable model (ONNX/TFLite) for offline smartphone triage in rural clinics.
+                        </li>
+                        <li>
+                            <strong>Federated Cross-Cohort Validation:</strong> Multi-hospital clinical registry evaluation across diverse endemic populations.
+                        </li>
+                        <li>
+                            <strong>EHR & HL7 FHIR Integration:</strong> Automated real-time risk stratification embedded into hospital triage workflows.
+                        </li>
+                    </ul>
                 </div>
             </aside>
 

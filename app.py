@@ -1,5 +1,6 @@
 import os
 import sys
+import re
 import joblib
 import pandas as pd
 import numpy as np
@@ -9,6 +10,73 @@ from flask import Flask, request, render_template, jsonify
 sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
 from feature_engineering import MalariaFeatureEngineer
 from explain import explain_prediction_shap, explain_prediction_lime
+
+def format_lime_rule(rule):
+    """Translates raw mathematical LIME inequalities into clean clinical descriptions."""
+    # Age categories
+    if 'is_child' in rule:
+        return 'Pediatric (Age ≤ 12)' if ('>' in rule) else 'Adult (Age > 12)'
+    if 'is_elderly' in rule:
+        return 'Elderly (Age > 50)' if ('>' in rule) else 'Non-Elderly (Age ≤ 50)'
+    if 'sex' in rule:
+        return 'Male Patient' if ('>' in rule) else 'Female Patient'
+    if 'age' in rule and not ('is_child' in rule or 'is_elderly' in rule):
+        m_age = re.search(r'([0-9.]+)\s*(<=|<)\s*age\s*(<=|<)\s*([0-9.]+)', rule)
+        if m_age:
+            return f"Age between {int(float(m_age.group(1)))} - {int(float(m_age.group(4)))} yrs"
+        m_age_single = re.search(r'age\s*(<=|<|>=|>)\s*([0-9.]+)', rule)
+        if m_age_single:
+            op_sym = '≤' if '<=' in m_age_single.group(1) else ('≥' if '>=' in m_age_single.group(1) else m_age_single.group(1))
+            return f"Age {op_sym} {int(float(m_age_single.group(2)))} yrs"
+        return "Patient Age"
+
+    # Symptom counts and severity index
+    m_count = re.search(r'(symptom_count|severe_symptom_count|severe_score)\s*(<=|<|>=|>)\s*([0-9.]+)', rule)
+    if m_count:
+        var, op, val = m_count.groups()
+        val_int = int(float(val))
+        op_sym = '≤' if op == '<=' else ('≥' if op == '>=' else op)
+        label_map = {
+            'symptom_count': 'Total Manifestations',
+            'severe_symptom_count': 'WHO Severe Criteria Count',
+            'severe_score': 'Severity Score Index'
+        }
+        return f"{label_map.get(var, var)} {op_sym} {val_int}"
+
+    # Clinical features & interactions
+    feature_map = {
+        'vomiting_diarrhea': 'Vomiting + Diarrhea Co-occurrence',
+        'anemia_fatigue': 'Anemia + Fatigue Co-occurrence',
+        'fever_headache': 'Fever + Headache Co-occurrence',
+        'fever_rigor': 'Fever + Rigor Co-occurrence',
+        'cocacola_urine': 'Coca-Cola Urine (Hemoglobinuria)',
+        'prostraction': 'Prostration (Extreme Exhaustion)',
+        'hyperpyrexia': 'Hyperpyrexia',
+        'hypoglycemia': 'Hypoglycemia',
+        'bitter_tongue': 'Bitter Tongue',
+        'Convulsion': 'Convulsions (Seizures)',
+        'jundice': 'Jaundice',
+        'Anemia': 'Severe Anemia',
+        'vomitting': 'Vomiting',
+        'diarrhea': 'Diarrhea',
+        'fatigue': 'Fatigue',
+        'headace': 'Headache',
+        'fever': 'Fever',
+        'cold': 'Cold / Chills',
+        'rigor': 'Rigors'
+    }
+
+    # Match longer keys first
+    for k in sorted(feature_map.keys(), key=lambda x: len(x), reverse=True):
+        if k in rule:
+            name = feature_map[k]
+            if '>' in rule:
+                return f"{name}: Present"
+            elif '<=' in rule or '<' in rule:
+                return f"{name}: Absent"
+            return name
+
+    return rule
 
 app = Flask(__name__)
 
@@ -187,14 +255,10 @@ def predict():
     for item in neg_contribs:
         item['friendly_name'] = friendly_names.get(item['feature'], item['feature'])
         
-    # Clean LIME rules with friendly names
+    # Clean LIME rules into readable clinical terminology
     lime_explanations = []
     for l_item in raw_lime:
-        clean_rule = l_item['rule']
-        for raw_k, friendly_k in friendly_names.items():
-            if raw_k in clean_rule:
-                clean_rule = clean_rule.replace(raw_k, friendly_k)
-        l_item['clean_rule'] = clean_rule
+        l_item['clean_rule'] = format_lime_rule(l_item['rule'])
         lime_explanations.append(l_item)
         
     # Evaluate severe signs and clinical diagnosis
