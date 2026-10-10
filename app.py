@@ -465,22 +465,22 @@ def predict():
                 verdict_summary = "Microscopy is NEGATIVE for Plasmodium parasites. Active malaria infection ruled out. Treat symptomatic complaints non-malarially."
                 verdict_badge_class = "verdict-negative"
     else:
-        # Clinical symptoms alone (without microscopy image)
+        # Clinical symptoms alone (without laboratory microscopy image confirmation)
         if active_severe_count >= 1:
-            malaria_verdict = "MALARIA POSITIVE (SEVERE COMPLICATION SUSPECTED)"
-            verdict_summary = "Patient exhibits WHO cardinal severe malaria complications (e.g. convulsions/jaundice). Urgent hospitalization and parenteral Artesunate indicated."
+            malaria_verdict = "SUSPECTED SEVERE MALARIA (EMERGENCY EVALUATION REQUIRED)"
+            verdict_summary = "Patient exhibits WHO cardinal severe danger signs (e.g. convulsions/jaundice/prostration). While severe malaria is strongly suspected, emergency differential diagnosis for bacterial sepsis or meningitis is critical. Immediate hospitalization required."
             verdict_badge_class = "verdict-critical"
         elif has_fever and active_secondary_mild_count >= 2:
-            malaria_verdict = "MALARIA POSITIVE (CLINICALLY SUSPECTED ACTIVE INFECTION)"
-            verdict_summary = "Classic malaria paroxysm triad confirmed (fever + chills + secondary signs). Prescribe oral first-line ACT (Coartem / Artemether-Lumefantrine)."
-            verdict_badge_class = "verdict-positive"
+            malaria_verdict = "SUSPECTED MALARIA (CONFIRMATORY RDT / BLOOD TEST REQUIRED)"
+            verdict_summary = "Patient presents with acute fever and chills/shivering. While clinically suspicious for malaria, symptoms overlap with viral influenza, dengue, and bacteremia. WHO guidelines require an RDT or Giemsa blood smear to confirm parasitemia before prescribing antimalarials."
+            verdict_badge_class = "verdict-inconclusive"
         elif has_fever:
-            malaria_verdict = "INCONCLUSIVE (TESTING REQUIRED - MILD FEBRILE PRESENTATION)"
-            verdict_summary = "Only 1–2 mild symptoms reported. Insufficient clinical criteria for definitive malaria diagnosis. Rapid Diagnostic Test (RDT) or blood smear required before antimalarials."
+            malaria_verdict = "UNCONFIRMED FEBRILE ILLNESS (DIAGNOSTIC WORKUP REQUIRED)"
+            verdict_summary = "Only 1–2 non-specific mild symptoms reported. This is insufficient clinical criteria to diagnose malaria. Common cold, viral fever, or flu are likely. Perform a rapid diagnostic test (RDT) if fever persists."
             verdict_badge_class = "verdict-inconclusive"
         elif active_symptoms_count > 0:
             malaria_verdict = "MALARIA NEGATIVE (NON-MALARIAL SYMPTOMS)"
-            verdict_summary = "Symptoms are atypical for acute malaria (no fever reported). Patient is negative for acute malaria. Investigate non-malarial causes."
+            verdict_summary = "Cardinal malarial sign (fever) is absent. Patient is negative for acute malaria. Investigate non-malarial etiologies (tension headache, fatigue, dehydration)."
             verdict_badge_class = "verdict-negative"
         else:
             malaria_verdict = "MALARIA NEGATIVE (HEALTHY BASELINE)"
