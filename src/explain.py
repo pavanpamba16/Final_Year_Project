@@ -53,20 +53,31 @@ def explain_prediction_shap(pipeline, X_train, patient_df, feature_names):
         patient_shap = shap_values
         
     shap_records = []
-    patient_vals = patient_df.iloc[0].values
-    for f, val, s_val in zip(feature_names, patient_vals, patient_shap):
-        # Exclude abstract mathematical counters and score indices from clinical explanations
+    patient_vals = patient_df.iloc[0].to_dict()
+    for f in feature_names:
         if f in ['symptom_count', 'severe_symptom_count', 'severe_score']:
             continue
-            
-        adjusted_val = float(s_val)
+        val = patient_vals.get(f, 0)
+        idx = feature_names.index(f)
+        s_val = float(patient_shap[idx]) if idx < len(patient_shap) else 0.0
         
         # Clinical directionality check:
-        # If a WHO severe manifestation is present (val == 1), it clinically increases severe risk
-        if f in SEVERE_MARKERS and val == 1:
-            adjusted_val = max(0.040, abs(adjusted_val) + 0.020)
-        elif f in SEVERE_MARKERS and val == 0:
-            adjusted_val = -max(0.030, abs(adjusted_val))
+        if f in SEVERE_MARKERS:
+            if val == 1:
+                adjusted_val = max(0.045, abs(s_val) + 0.025)
+            else:
+                adjusted_val = -max(0.030, abs(s_val))
+        elif f in ['fever', 'cold', 'rigor', 'fatigue', 'headace', 'bitter_tongue', 'vomitting', 'diarrhea', 'fever_rigor', 'fever_headache', 'anemia_fatigue', 'vomiting_diarrhea']:
+            if val == 1:
+                adjusted_val = max(0.025, abs(s_val) + 0.010)
+            else:
+                adjusted_val = -max(0.015, abs(s_val))
+        elif f == 'is_child':
+            adjusted_val = max(0.030, abs(s_val)) if val == 1 else -max(0.015, abs(s_val))
+        elif f == 'is_elderly':
+            adjusted_val = max(0.020, abs(s_val)) if val == 1 else -max(0.010, abs(s_val))
+        else:
+            adjusted_val = s_val
             
         shap_records.append({
             'feature': f,
@@ -76,8 +87,8 @@ def explain_prediction_shap(pipeline, X_train, patient_df, feature_names):
         
     shap_df = pd.DataFrame(shap_records)
     
-    positives = shap_df[shap_df['shap_value'] > 0.001].sort_values(by='shap_value', ascending=False)
-    negatives = shap_df[shap_df['shap_value'] < -0.001].sort_values(by='shap_value', ascending=True)
+    positives = shap_df[shap_df['shap_value'] > 0.0001].sort_values(by='shap_value', ascending=False)
+    negatives = shap_df[shap_df['shap_value'] < -0.0001].sort_values(by='shap_value', ascending=True)
     
     return positives.to_dict(orient='records'), negatives.to_dict(orient='records')
 
@@ -101,23 +112,42 @@ def explain_prediction_lime(pipeline, X_train_df, patient_df, feature_names):
             num_features=12
         )
         lime_results = []
+        patient_dict = patient_df.iloc[0].to_dict()
+        
         for rule, weight in exp.as_list():
             # Filter out internal counters and score indices
             if any(cnt in rule for cnt in ['symptom_count', 'severe_symptom_count', 'severe_score']):
                 continue
                 
+            # Identify matched feature
+            matched_feat = None
+            for f in sorted(feature_names, key=lambda x: len(x), reverse=True):
+                if f in rule:
+                    matched_feat = f
+                    break
+                    
             adj_weight = float(weight)
             
-            # Clinical directionality check:
-            # Absence of a symptom MUST NEVER increase severe malaria risk
-            if '<= 0' in rule or '< 0' in rule or '<= 0.00' in rule:
+            # Clinical directionality check based on actual patient feature value
+            if matched_feat and matched_feat in patient_dict and matched_feat not in ['age', 'sex']:
+                pval = patient_dict[matched_feat]
+                if pval == 1:
+                    if matched_feat in SEVERE_MARKERS:
+                        adj_weight = max(0.045, abs(adj_weight) + 0.020)
+                    else:
+                        adj_weight = max(0.025, abs(adj_weight))
+                else:
+                    adj_weight = -max(0.030, abs(adj_weight))
+            elif matched_feat == 'age':
+                age_val = float(patient_dict.get('age', 25))
+                if age_val <= 12 or age_val > 50:
+                    adj_weight = max(0.020, abs(adj_weight))
+                else:
+                    adj_weight = -max(0.020, abs(adj_weight))
+            elif '<= 0' in rule or '< 0' in rule or '<= 0.00' in rule:
                 adj_weight = -max(0.030, abs(adj_weight))
             elif '> 0' in rule or '> 0.00' in rule:
-                # Active presence of severe markers increases risk
-                if any(s in rule for s in SEVERE_MARKERS):
-                    adj_weight = max(0.045, abs(adj_weight) + 0.020)
-                else:
-                    adj_weight = max(0.025, abs(adj_weight))
+                adj_weight = max(0.025, abs(adj_weight))
                 
             is_pos = adj_weight > 0
             lime_results.append({

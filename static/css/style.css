@@ -549,6 +549,10 @@ h1, h2, h3, h4 {
     border: 2px solid rgba(255, 71, 87, 0.4);
 }
 
+.warning-risk-ring {
+    border: 2px solid rgba(255, 165, 2, 0.5);
+}
+
 .low-risk-ring {
     border: 2px solid rgba(0, 229, 255, 0.4);
 }
@@ -583,6 +587,13 @@ h1, h2, h3, h4 {
     color: #ff6b81;
     border: 1px solid rgba(255, 71, 87, 0.3);
     box-shadow: 0 0 15px rgba(255, 71, 87, 0.2);
+}
+
+.badge-warning {
+    background: rgba(255, 165, 2, 0.15);
+    color: #ffa502;
+    border: 1px solid rgba(255, 165, 2, 0.35);
+    box-shadow: 0 0 15px rgba(255, 165, 2, 0.2);
 }
 
 .badge-low {
@@ -792,6 +803,12 @@ h1, h2, h3, h4 {
     box-shadow: 0 4px 20px rgba(46, 213, 115, 0.08);
 }
 
+.clinical-diagnosis-banner.alert-warning {
+    background: rgba(255, 165, 2, 0.08);
+    border: 1px solid rgba(255, 165, 2, 0.35);
+    box-shadow: 0 4px 20px rgba(255, 165, 2, 0.1);
+}
+
 .diagnosis-header {
     display: flex;
     align-items: center;
@@ -812,6 +829,12 @@ h1, h2, h3, h4 {
     background: rgba(255, 71, 87, 0.25);
     color: #ff6b81;
     border: 1px solid rgba(255, 71, 87, 0.4);
+}
+
+.alert-warning .diagnosis-status-pill {
+    background: rgba(255, 165, 2, 0.22);
+    color: #ffa502;
+    border: 1px solid rgba(255, 165, 2, 0.45);
 }
 
 .alert-safe .diagnosis-status-pill {
