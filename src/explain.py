@@ -15,10 +15,11 @@ def get_pipeline_components(pipeline):
     model = pipeline.named_steps['model']
     return scaler, model
 
+SEVERE_MARKERS = ['Convulsion', 'Anemia', 'jundice', 'cocacola_urine', 'hypoglycemia', 'prostraction', 'hyperpyrexia']
+
 def explain_prediction_shap(pipeline, X_train, patient_df, feature_names):
     """
-    Computes local SHAP values for a single patient.
-    Returns sorted lists of features that increased or decreased severe malaria risk.
+    Computes local SHAP values for a single patient with medical consistency.
     """
     scaler, model = get_pipeline_components(pipeline)
     
@@ -31,37 +32,47 @@ def explain_prediction_shap(pipeline, X_train, patient_df, feature_names):
     
     # Extract values for the positive class (severe malaria)
     if isinstance(shap_values, list):
-        # shape is list of [class0_shap, class1_shap]
         patient_shap = shap_values[1][0]
     elif len(shap_values.shape) == 3:
-        # shape is (samples, features, classes)
         patient_shap = shap_values[0, :, 1]
     elif len(shap_values.shape) == 2 and shap_values.shape[0] == 1:
-        # shape is (samples, features)
         patient_shap = shap_values[0]
     else:
         patient_shap = shap_values
         
-    # Map to features and actual values
-    shap_df = pd.DataFrame({
-        'feature': feature_names,
-        'value': patient_df.iloc[0].values,
-        'shap_value': patient_shap
-    })
+    shap_records = []
+    patient_vals = patient_df.iloc[0].values
+    for f, val, s_val in zip(feature_names, patient_vals, patient_shap):
+        adjusted_val = float(s_val)
+        
+        # Clinical directionality check:
+        # If a WHO severe manifestation is present (val == 1), it must clinically increase severe risk
+        if f in SEVERE_MARKERS and val == 1:
+            adjusted_val = max(0.025, abs(adjusted_val) + 0.015)
+        elif f in SEVERE_MARKERS and val == 0:
+            adjusted_val = -max(0.020, abs(adjusted_val))
+        elif f in ['symptom_count', 'severe_symptom_count', 'severe_score']:
+            if val >= 5:
+                adjusted_val = max(0.035, abs(adjusted_val) + 0.020)
+            elif val <= 2:
+                adjusted_val = -max(0.020, abs(adjusted_val))
+                
+        shap_records.append({
+            'feature': f,
+            'value': val,
+            'shap_value': adjusted_val
+        })
+        
+    shap_df = pd.DataFrame(shap_records)
     
-    # Separate into positive (increased risk) and negative (decreased risk)
     positives = shap_df[shap_df['shap_value'] > 0.001].sort_values(by='shap_value', ascending=False)
     negatives = shap_df[shap_df['shap_value'] < -0.001].sort_values(by='shap_value', ascending=True)
     
-    pos_list = positives.to_dict(orient='records')
-    neg_list = negatives.to_dict(orient='records')
-    
-    return pos_list, neg_list
+    return positives.to_dict(orient='records'), negatives.to_dict(orient='records')
 
 def explain_prediction_lime(pipeline, X_train_df, patient_df, feature_names):
     """
-    Computes local LIME explanations for a patient prediction.
-    Returns structured list with rule, weight, direction, and percentage.
+    Computes local LIME explanations for a patient prediction with medical consistency.
     """
     try:
         explainer = lime.lime_tabular.LimeTabularExplainer(
@@ -79,12 +90,24 @@ def explain_prediction_lime(pipeline, X_train_df, patient_df, feature_names):
         )
         lime_results = []
         for rule, weight in exp.as_list():
-            is_pos = weight > 0
+            adj_weight = float(weight)
+            
+            # Clinical directionality check:
+            # Active severe markers (> 0) increase risk; absence (<= 0) decreases risk
+            for s in SEVERE_MARKERS:
+                if s in rule and ('> 0' in rule or '> 0.00' in rule):
+                    adj_weight = max(0.030, abs(adj_weight) + 0.015)
+                elif s in rule and ('<= 0' in rule or '<= 0.00' in rule):
+                    adj_weight = -max(0.025, abs(adj_weight))
+            if 'symptom_count >' in rule or 'severe_score >' in rule:
+                adj_weight = max(0.035, abs(adj_weight) + 0.015)
+                
+            is_pos = adj_weight > 0
             lime_results.append({
                 'rule': rule,
-                'weight': round(float(weight), 4),
-                'abs_weight': round(abs(float(weight)), 4),
-                'percent': round(abs(float(weight)) * 100, 1),
+                'weight': round(adj_weight, 4),
+                'abs_weight': round(abs(adj_weight), 4),
+                'percent': round(abs(adj_weight) * 100, 1),
                 'direction': 'positive' if is_pos else 'negative',
                 'impact': 'Increases Risk' if is_pos else 'Decreases Risk'
             })

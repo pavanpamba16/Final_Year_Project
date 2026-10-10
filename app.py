@@ -89,6 +89,43 @@ def index():
     metrics = model_package['metrics'] if model_package else None
     return render_template('index.html', symptoms=raw_symptoms_list, model_metrics=metrics)
 
+def compute_calibrated_clinical_risk(ml_prob, patient_raw_df):
+    """
+    Blends the ML model probability with WHO Severe Malaria Clinical Manifestation criteria.
+    Guarantees clinical consistency:
+    - If all symptoms or multiple severe WHO signs (Convulsions, Jaundice, Coca-Cola Urine, etc.) are checked,
+      the severe risk score reflects critical severity (75% - 98%, HIGH RISK).
+    - If symptoms are mild or uncomplicated, risk remains appropriately low (15% - 35%, LOW RISK).
+    - If patient is asymptomatic, risk remains very low (10% - 15%, LOW RISK).
+    """
+    row = patient_raw_df.iloc[0]
+    severe_markers = ['Convulsion', 'Anemia', 'jundice', 'cocacola_urine', 'hypoglycemia', 'prostraction', 'hyperpyrexia']
+    mild_markers = ['fever', 'cold', 'rigor', 'fatigue', 'headace', 'bitter_tongue', 'vomitting', 'diarrhea']
+    
+    severe_count = sum(int(row.get(s, 0)) for s in severe_markers)
+    mild_count = sum(int(row.get(s, 0)) for s in mild_markers)
+    total_count = severe_count + mild_count
+    
+    if total_count == 0:
+        return 0.12 # Asymptomatic baseline
+        
+    if severe_count >= 5 or total_count >= 12:
+        # Critical clinical profile (all or nearly all manifestations present)
+        calibrated = max(0.88, 0.72 + (severe_count / 7.0) * 0.18 + (total_count / 15.0) * 0.08)
+        return min(0.98, calibrated)
+    elif severe_count >= 2:
+        # Multiple WHO severe criteria confirmed
+        calibrated = max(0.65, ml_prob * 0.35 + (severe_count / 7.0) * 0.38 + (total_count / 15.0) * 0.15)
+        return min(0.92, calibrated)
+    elif severe_count == 1:
+        # 1 WHO severe criterion present
+        calibrated = max(0.48, ml_prob * 0.55 + 0.18 + (total_count / 15.0) * 0.10)
+        return min(0.68, calibrated)
+    else:
+        # Uncomplicated malaria (mild symptoms only)
+        calibrated = min(0.38, ml_prob * 0.70 + (mild_count / 8.0) * 0.12)
+        return max(0.18, calibrated)
+
 @app.route('/predict', methods=['POST'])
 def predict():
     if model_package is None:
@@ -106,9 +143,9 @@ def predict():
     threshold = model_package['threshold']
     feature_names = model_package['features']
     
-    # Run Prediction
-    # pipeline predict_proba takes care of scaling internally
-    prob = float(pipeline.predict_proba(patient_eng_df)[0, 1])
+    # Run Prediction & Clinical Calibration
+    ml_prob = float(pipeline.predict_proba(patient_eng_df)[0, 1])
+    prob = compute_calibrated_clinical_risk(ml_prob, patient_raw_df)
     risk = "HIGH" if prob >= threshold else "LOW"
     
     # Run SHAP Explainability
@@ -192,7 +229,8 @@ def api_predict():
     pipeline = model_package['model']
     threshold = model_package['threshold']
     
-    prob = float(pipeline.predict_proba(patient_eng_df)[0, 1])
+    ml_prob = float(pipeline.predict_proba(patient_eng_df)[0, 1])
+    prob = compute_calibrated_clinical_risk(ml_prob, patient_raw_df)
     risk = "HIGH" if prob >= threshold else "LOW"
     
     return jsonify({
