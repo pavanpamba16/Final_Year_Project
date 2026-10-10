@@ -188,11 +188,11 @@
                     <div class="model-meta-list">
                         <div class="model-meta-item">
                             <span>Pipeline Classifier</span>
-                            <strong>Random Forest Classifier (300 Trees)</strong>
+                            <strong>Random Forest Classifier</strong>
                         </div>
                         <div class="model-meta-item">
                             <span>Generalization Balancer</span>
-                            <strong>Balanced Resampling (No Leakage)</strong>
+                            <strong>SMOTE Oversampling</strong>
                         </div>
                         <div class="model-meta-item">
                             <span>Validation Accuracy</span>
@@ -209,10 +209,6 @@
                         <div class="model-meta-item">
                             <span>ROC-AUC Score</span>
                             <strong style="color: #38bdf8;">{{ (data.model_metrics.roc_auc * 100) | round(1) if data.model_metrics else '91.7%' }}%</strong>
-                        </div>
-                        <div class="model-meta-item">
-                            <span>Pipeline Version</span>
-                            <span class="badge">{{ data.model_name }}</span>
                         </div>
                     </div>
                 </div>
