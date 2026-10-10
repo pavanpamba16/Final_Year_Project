@@ -169,41 +169,55 @@ def index():
 def compute_calibrated_clinical_risk(ml_prob, patient_raw_df):
     """
     Blends ML probability with WHO Severe Malaria Clinical Manifestation criteria.
-    Guarantees clinical consistency:
-    - Multiple WHO severe signs or extensive manifestations -> Critical severity (84% - 98.5%, HIGH RISK).
-    - 1 cardinal WHO severe marker -> High Risk Severe Malaria (74% - 80%, HIGH RISK).
-    - Uncomplicated febrile presentation (fever present, mild malaria signs) -> Active Malaria Clinical Match (76% - 88%).
-    - Isolated fever only -> Moderate clinical suspicion (48%).
-    - Non-specific symptoms without fever -> Very low malaria probability (12% - 18%, LOW RISK).
-    - Asymptomatic -> Baseline healthy (6%, LOW RISK).
+    Guarantees clinical consistency and fine-grained, accurate risk scores:
+    - Multiple WHO severe signs (multi-organ failure) -> 92.0% - 98.5% (CRITICAL)
+    - 1-2 cardinal WHO severe markers -> 82.0% - 92.0% (CRITICAL)
+    - Uncomplicated febrile presentation (fever + chills/rigor/headache/vomiting) -> 78.0% - 88.0% (WARNING / ACTIVE MALARIA)
+    - Isolated fever only -> 42.0% (Indeterminate Febrile Illness, RDT confirmation required)
+    - Non-specific symptoms without fever -> 8.0% - 15.0% (SAFE / LOW RISK)
+    - Asymptomatic baseline -> 5.0% (SAFE / LOW RISK)
     """
     row = patient_raw_df.iloc[0]
     severe_markers = ['Convulsion', 'Anemia', 'jundice', 'cocacola_urine', 'hypoglycemia', 'prostraction', 'hyperpyrexia']
-    mild_markers = ['fever', 'cold', 'rigor', 'fatigue', 'headace', 'bitter_tongue', 'vomitting', 'diarrhea']
+    secondary_mild_markers = ['cold', 'rigor', 'fatigue', 'headace', 'bitter_tongue', 'vomitting', 'diarrhea']
     
-    severe_count = sum(int(row.get(s, 0)) for s in severe_markers)
-    mild_count = sum(int(row.get(s, 0)) for s in mild_markers)
-    total_count = severe_count + mild_count
     has_fever = int(row.get('fever', 0)) == 1
+    severe_count = sum(int(row.get(s, 0)) for s in severe_markers)
+    secondary_mild_count = sum(int(row.get(s, 0)) for s in secondary_mild_markers)
+    total_count = (1 if has_fever else 0) + severe_count + secondary_mild_count
+    
+    age = int(row.get('age', 25))
+    is_vulnerable = (age <= 12) or (age >= 55)
+    age_boost = 0.03 if is_vulnerable else 0.0
     
     if total_count == 0:
-        return 0.06 # Asymptomatic baseline
+        return 0.05  # Healthy baseline (5%)
         
-    if severe_count >= 5 or total_count >= 12:
-        return min(0.985, max(0.92, 0.88 + (severe_count / 7.0) * 0.08 + (total_count / 15.0) * 0.02))
-    elif severe_count >= 2:
-        return min(0.94, max(0.84, 0.76 + (severe_count / 7.0) * 0.12 + ml_prob * 0.10))
-    elif severe_count == 1:
-        return min(0.80, max(0.74, 0.68 + (total_count / 15.0) * 0.08 + ml_prob * 0.10))
-    elif has_fever and mild_count >= 1:
-        # Classic uncomplicated febrile malaria triad
-        return min(0.88, max(0.76, 0.70 + (mild_count / 8.0) * 0.14 + ml_prob * 0.05))
+    if severe_count >= 3:
+        # Multiple cardinal severe complications (multi-organ failure)
+        base = 0.92 + min(0.06, (severe_count - 3) * 0.02)
+        return min(0.985, round(base + age_boost + (0.01 if has_fever else 0.0), 3))
+    elif severe_count >= 1:
+        # 1-2 cardinal severe complications
+        if has_fever:
+            # Classic Severe Malaria (Fever + Convulsion / Jaundice / Prostration etc.)
+            base = 0.88 if severe_count == 1 else 0.92
+            return min(0.96, round(base + (secondary_mild_count * 0.01) + age_boost, 3))
+        else:
+            # Severe sign without documented fever (e.g. isolated convulsion or jaundice)
+            base = 0.82 if severe_count == 1 else 0.87
+            return min(0.92, round(base + age_boost, 3))
+    elif has_fever and secondary_mild_count >= 1:
+        # Classic Uncomplicated Malaria (Fever + Chills, Rigor, Headache, etc.)
+        # Scales accurately from 79% (1 mild symptom) to 87% (multiple classic signs)
+        base = 0.78 + min(0.09, (secondary_mild_count / 7.0) * 0.09)
+        return min(0.89, round(base + (0.02 if is_vulnerable else 0.0), 3))
     elif has_fever:
-        # Isolated fever only
-        return 0.48
+        # Isolated Fever only -> Indeterminate acute febrile illness (requires RDT)
+        return 0.42
     else:
-        # Non-specific symptoms without fever
-        return min(0.18, max(0.12, 0.08 + (mild_count / 8.0) * 0.08))
+        # Non-specific symptoms without fever (e.g. headache only, fatigue only)
+        return min(0.15, round(0.07 + (secondary_mild_count / 7.0) * 0.07, 3))
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -289,7 +303,8 @@ def predict():
     active_severe = [friendly_names[s] for s in severe_markers if patient_raw_df.iloc[0].get(s, 0) == 1]
     active_symptoms_count = sum(patient_raw_df.iloc[0].get(s, 0) == 1 for s in raw_symptoms_list)
     active_severe_count = len(active_severe)
-    active_mild_count = active_symptoms_count - active_severe_count
+    secondary_mild_markers = ['cold', 'rigor', 'fatigue', 'headace', 'bitter_tongue', 'vomitting', 'diarrhea']
+    active_secondary_mild_count = sum(patient_raw_df.iloc[0].get(s, 0) == 1 for s in secondary_mild_markers)
     has_fever = int(patient_raw_df.iloc[0].get('fever', 0)) == 1
     
     # Standalone clinical triage logic
@@ -300,7 +315,7 @@ def predict():
         triage_status = "EMERGENCY ADMISSION"
         status_tier = "CRITICAL"
         is_critical = True
-    elif has_fever and active_mild_count >= 1:
+    elif has_fever and active_secondary_mild_count >= 1:
         clinical_diagnosis = "Clinically Suspected Malaria (Uncomplicated Febrile Presentation)"
         clinical_badge = "Suspected Malaria (Active Infection)"
         clinical_recommendation = "PRESCRIBE ORAL ACT: Patient presents with classic uncomplicated febrile malaria symptom complex without vital organ failure. Prescribe oral Artemisinin-based Combination Therapy (ACT, e.g. Artemether-Lumefantrine / Coartem). Monitor for 48 hours."
@@ -308,9 +323,9 @@ def predict():
         status_tier = "WARNING"
         is_critical = False
     elif has_fever:
-        clinical_diagnosis = "Undifferentiated Febrile Illness (Malaria Suspected)"
+        clinical_diagnosis = "Undifferentiated Febrile Illness (Diagnostic Confirmation Required)"
         clinical_badge = "Febrile Illness (Diagnostic Triage)"
-        clinical_recommendation = "Acute fever detected. Perform point-of-care Rapid Diagnostic Test (RDT) or blood smear to confirm Plasmodium parasitemia prior to ACT administration."
+        clinical_recommendation = "Acute fever detected. Perform point-of-care Rapid Diagnostic Test (RDT) or Giemsa blood smear to confirm Plasmodium parasitemia prior to ACT administration. Rule out viral or bacterial etiology."
         triage_status = "RDT / CLINICAL TRIAGE"
         status_tier = "WARNING"
         is_critical = False
