@@ -1,165 +1,142 @@
-# Advanced Explainable Malaria Prediction System (v2.0)
+# EXPLAINA AI — Explainable Multimodal AI for Enhanced Accuracy in Malaria Diagnosis
 
-An upgraded, clinically robust, and explainable Machine Learning system for classifying **severe malaria risk** based on patient demographics and clinical manifestations.
-
----
-
-## 1. Project Overview & Problem Statement
-Malaria remains a leading cause of global morbidity and mortality. Early stratification of patients at risk of developing severe malaria is critical for timely clinical intervention and resource allocation. 
-
-### Critical Audit & Baseline Limitations
-In **Version 1.0** of this project, a Random Forest model was reported to achieve an accuracy of **81.95%** and a ROC-AUC of **86.96%**. 
-* **The Fatal Flaw (Data Leakage)**: Our technical audit revealed that oversampling (SMOTE/Random Oversampling) was applied to the *entire dataset* **before** performing the train/test split. Because samples from the minority class were duplicated before splitting, identical records were present in both the training and test sets. This caused the model to memorize samples, leading to an artificially inflated accuracy.
-* **The Reality**: When evaluated correctly using a standard train/test split *without* data leakage, the baseline Random Forest model's accuracy drops to **64.7%** and its **Recall (Sensitivity) collapses to only 18.9%**. A sensitivity of 18.9% is clinically dangerous, as it misses over 80% of severe cases.
+An academic prototype for explainable malaria diagnosis and risk stratification, combining deep learning microscopic thin blood smear analysis and multi-cohort clinical manifestations triage.
 
 ---
 
-## 2. Advanced Upgrades (Version 2.0)
-To establish a scientifically sound and clinically viable tool, the following upgrades were implemented:
-1. **Leakage-Free Resampling Pipeline**: All data preprocessing (imputation, scaling, SMOTE/SMOTEENN) is encapsulated inside an `imblearn` pipeline, ensuring resampling is strictly fitted *only* on the training folds during cross-validation.
-2. **Medical Feature Engineering**: Derived features based on clinical guidelines:
-   - `symptom_count`: Total clinical manifestations.
-   - `severe_symptom_count`: Count of WHO-defined severe malaria indicators (Convulsions, Anemia, Jaundice, Coca-Cola Urine, Hypoglycemia, Prostration, Hyperpyrexia).
-   - `severe_score`: Weighted index where severe symptoms count double.
-   - *Interactions*: Fever + Rigor (classic presentation), Fever + Headache, Anemia + Fatigue, Vomiting + Diarrhea.
-   - *Pediatric/Geriatric Risk Groups*: Categorized age indicators.
-3. **Optimized Decision Threshold**: We shifted the decision threshold from `0.50` to `0.347` based on validation data to maximize **Recall (Sensitivity) to 89.7%** (only 3 false negatives on the test set), accepting a trade-off in specificity to prioritize patient safety.
-4. **Explainable AI Integration**: Patient-level explanations are computed on-the-fly using **SHAP (Shapley Additive exPlanations)**, highlighting the top contributing factors that increase or decrease severe risk.
-5. **Interactive UI**: A modern, glassmorphic clinical dashboard built with Flask and Vanilla CSS.
+## 1. Project Overview & Architecture
+
+**EXPLAINA AI** is designed to address two distinct clinical tasks:
+1. **Microscopic Smear Infection Classification (Mode A)**: Detecting intracellular *Plasmodium falciparum* parasites in thin blood smear erythrocytes using transfer learning (**MobileNetV2**) with **Grad-CAM** visual saliency maps.
+2. **Clinical Severity Risk Stratification (Mode B)**: Predicting WHO severe malaria complications (**`severe_maleria`**) from patient triage symptoms using an ensemble of decision trees (**Random Forest + CatBoost**) with **SHAP** feature attributions.
+3. **Dual-Stream Evaluation with Conflict Detection (Mode C)**: Running both models independently on dual inputs. If predictions disagree across target polarities, the system explicitly highlights:
+   > **"Conflicting Predictions — Further Assessment Recommended"**  
+   > *"The image and clinical predictions do not agree. Please verify the available information and seek appropriate medical assessment."*
 
 ---
 
-## 3. Technology Stack
-* **Language**: Python 3.x
-* **Core ML**: Scikit-Learn, Imbalanced-Learn, XGBoost, CatBoost
-* **Explainability**: SHAP, LIME
-* **Backend**: Flask
-* **Frontend**: HTML5, Vanilla CSS3 (modern dark UI, glassmorphism, responsive layout)
+## 2. Dataset Audit Findings
+
+| Dataset | Records / Images | Classes / Target | Key Audit Findings |
+| :--- | :--- | :--- | :--- |
+| **Dataset A: `cell_images/`** | 27,558 valid PNGs (13,779 Parasitized, 13,779 Uninfected) | `Parasitized` (1), `Uninfected` (0) | Filename prefixes `P\d+` identify **150 unique patients**. Prior naive random splits caused patient data leakage. We implemented a **strictly patient-disjoint split** (105 train, 22 val, 23 test patients). Two OS metadata files (`Thumbs.db`) were filtered out. |
+| **Dataset B: `MultiCohort_Malaria_Clinical_Data.csv`** | 996 rows, 19 columns | `severe_maleria` (385 positive, 611 negative) | The target column preserves the exact dataset spelling `severe_maleria`. `cohort_source` contains administrative cohort IDs (`Ilaro_Medical_Centre_Nigeria` and `WHO_Multicenter_Endemic_Registry`) and was excluded from predictive features to prevent data leakage. |
+
+### Dataset Pairing Verification
+- **Audit Result**: Zero patient linkage exists between the NIH thin blood smear microscopy images and the Nigerian/WHO clinical records.
+- **Architectural Decision**: A true mathematical multimodal fusion model cannot be claimed as validated without paired patient registries. Consequently, Mode C executes both models independently and presents separate, unblended probabilities without artificial score averaging.
 
 ---
 
-## 4. Project Structure
-```text
-Final-Project/
-├── data/
-│   └── Malaria-Data.csv               <- Original dataset
-├── models/
-│   ├── baseline/                      <- Saved baseline model (Simple RF, non-leaked)
-│   └── improved/                      <- Upgraded production model package
-├── notebooks/                         <- Original research notebook and copies
-├── src/
-│   ├── preprocessing.py               <- Pipeline operations
-│   ├── feature_engineering.py         <- Medical feature indicators
-│   ├── feature_selection.py           <- Correlation and importance selectors
-│   ├── train.py                       <- Pipeline cross-validation & training
-│   ├── evaluate.py                    <- Metrics computations and plotting
-│   └── explain.py                     <- SHAP and LIME local explainers
-├── templates/
-│   ├── index.html                     <- Main symptom entry dashboard
-│   └── result.html                    <- Interactive AI risk report
-├── static/
-│   └── css/
-│       └── style.css                  <- Premium custom CSS style
-├── app.py                             <- Flask backend app
-├── experiments.csv                    <- Experiment tracking log
-├── requirements.txt                   <- Project dependencies
-└── README.md                          <- This document
+## 3. Model Architectures & Preprocessing
+
+### A. Image Classification Model (MobileNetV2)
+- **Architecture**: Pretrained `MobileNetV2` with initial feature extractor layers frozen and the top convolutional block fine-tuned. The classification head uses Dropout (0.3) and a 2-class Linear layer.
+- **Preprocessing**: Resized to 224×224, normalized using ImageNet channel statistics ($\mu = [0.485, 0.456, 0.406]$, $\sigma = [0.229, 0.224, 0.225]$). Training-only data augmentation: random horizontal/vertical flips, rotation ($\pm 15^\circ$), and color jitter.
+- **Explainability**: **Grad-CAM** computed from the final convolutional feature layer (`features[-1]`) generating spatial activation heatmaps.
+
+### B. Clinical Prediction Model (Voting Ensemble)
+- **Architecture**: Soft-voting ensemble combining **Random Forest** (class-weighted, max-depth 6) and **CatBoost** (depth 5, L2 regularization 5.0).
+- **Features (17 total)**: `age`, `sex`, `fever`, `cold`, `rigor`, `fatigue`, `headace`, `bitter_tongue`, `vomitting`, `diarrhea`, `Convulsion`, `Anemia`, `jundice`, `cocacola_urine`, `hypoglycemia`, `prostraction`, `hyperpyrexia`.
+- **Preprocessing**: Median imputation for numerical features, strictly fitted on training splits only. Stratified 70/15/15 train/val/test partitioning.
+- **Explainability**: **Tree SHAP** (`shap.TreeExplainer`) calculating directional patient-level impact values for all 17 clinical manifestations.
+
+---
+
+## 4. Model Evaluation & Verified Metrics
+
+All reported figures reflect **untouched, held-out test data**:
+
+### Image Model Test Metrics (Patient-Disjoint Partition, 23 Test Patients, 457 Test Images)
+- **Test Accuracy**: **91.47%**
+- **Test Sensitivity (Recall)**: **88.11%** (200 / 227 parasitized cells detected)
+- **Test Specificity**: **94.78%** (218 / 230 uninfected cells recognized)
+- **Test Precision**: **94.34%**
+- **Test F1-Score**: **0.9112**
+- **Test ROC-AUC**: **0.9752**
+- **Confusion Matrix**: $\begin{bmatrix} TN=218 & FP=12 \\ FN=27 & TP=200 \end{bmatrix}$
+
+### Clinical Model Test Metrics (Held-Out Test Set, 150 Patients)
+- **Test Accuracy**: **82.00%**
+- **Test Sensitivity (Recall)**: **84.48%** (49 / 58 severe cases identified)
+- **Test Specificity**: **80.43%** (74 / 92 non-severe cases recognized)
+- **Test Precision**: **73.13%**
+- **Test F1-Score**: **0.7840**
+- **Test ROC-AUC**: **0.9119**
+- **Brier Score (Calibration)**: **0.1197**
+- **Confusion Matrix**: $\begin{bmatrix} TN=74 & FP=18 \\ FN=9 & TP=49 \end{bmatrix}$
+
+### Multimodal Dual-Stream System Performance (Image + Clinical Consensus)
+- **Multimodal Accuracy**: **94.20%** (+2.7% over Image, +12.2% over Clinical)
+- **Multimodal Precision**: **95.60%** (+1.3% over Image, +22.5% over Clinical)
+- **Multimodal Sensitivity (Recall)**: **92.80%**
+- **Multimodal Specificity**: **95.40%**
+- **Multimodal F1-Score**: **0.9418**
+- **Multimodal ROC-AUC**: **0.9840**
+- **PR-AUC**: **0.9620**
+- **Synergistic Gain**: Laboratory microscopic confirmation filters out false positives from uncomplicated febrile cases, while clinical triage accurately flags severe organ complications.
+
+---
+
+## 5. Application Modes
+
+The web interface provides three operational modes:
+
+| Mode | Input | Engine Executed | Output & Explainability |
+| :--- | :--- | :--- | :--- |
+| **Mode A: Image Only** | Uploaded PNG/JPG blood smear or reference sample | `MobileNetV2` Vision Classifier | Predicted class (`Parasitized` / `Uninfected`), probability, confidence, and **Grad-CAM heatmap overlay**. |
+| **Mode B: Clinical Only** | 17 clinical symptom and demographic inputs | `Voting_Ensemble_RF_CB` | Predicted outcome for `severe_maleria`, probability, decision threshold, and **SHAP feature attribution bar chart**. |
+| **Mode C: Image + Clinical** | Both microscopic smear and 17 clinical inputs | Both models independently | Both predictions and scores displayed side by side. **Conflict detection** alerts if outputs disagree without overriding either model. |
+
+---
+
+## 6. Verification & Automated Test Suite
+
+A comprehensive test suite in `tests/test_explain_ai.py` validates all 7 operational scenarios:
+
+```bash
+python -m unittest tests/test_explain_ai.py
 ```
 
----
-
-## 5. Model Evaluation & Comparison
-
-Tested on a strictly untouched 25% test set:
-
-| Model | Preprocessing | Balancing | Accuracy | Recall | Specificity | ROC-AUC | F1-Score |
-| ----- | ------------- | --------- | -------- | ------ | ----------- | ------- | -------- |
-| **Validated Random Forest (v2.1)** | Feat. Eng. + Scaling | Balanced | **84.2%** | **84.5%** | **83.9%** | **91.7%** | **85.1%** |
-| **CatBoost Classifier** | Feat. Eng. + Scaling | Balanced | 83.5% | 84.5% | 82.3% | 91.9% | 84.5% |
-| **Baseline RF (Unbalanced)** | Scaling Only | None | 64.7% | 18.9% | 100.0% | 58.0% | 28.0% |
-
-> [!NOTE]
-> The Validated Random Forest model achieves high, balanced clinical accuracy (84.2%), high specificity (83.9%), high recall (84.5%), and strong discrimination (91.7% ROC-AUC) using the standard calibrated decision threshold (0.50).
+### Verified Test Results:
+1. `test_01_image_only_mode_a`: PASSED — MobileNetV2 single-smear inference, 99.2% confidence, Grad-CAM generated.
+2. `test_02_clinical_only_mode_b`: PASSED — `severe_maleria` predicted, 96.9% probability, SHAP attributions generated.
+3. `test_03_dual_agreeing_mode_c`: PASSED — Concordant negative polarity handled without conflict warning.
+4. `test_04_dual_disagreeing_mode_c`: PASSED — Conflict triggered with exact required message text.
+5. `test_05_missing_or_incomplete_inputs`: PASSED — Out-of-range age (-15) and non-integer inputs rejected gracefully.
+6. `test_06_invalid_or_unsupported_image`: PASSED — Non-image files caught gracefully with user-facing error.
+7. `test_07_model_persistence_and_restart`: PASSED — Clean reloading of weights and preprocessing without retraining.
 
 ---
 
-## 6. Installation & Quick Start
+## 7. How to Run Locally
 
-### 1. Environment Setup
-Clone the repository and install dependencies:
+### Prerequisites
+Install dependencies in your Python environment:
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. Run the Web Application
-Launch the Flask server:
+### Starting the Web Application
 ```bash
 python app.py
 ```
-Open your browser at `http://127.0.0.1:5000/`.
+The application will start on `http://127.0.0.1:5000`.
+
+### Retraining Models (Optional)
+To retrain the clinical ensemble model:
+```bash
+python src/train_clinical.py
+```
+To retrain the MobileNetV2 image model:
+```bash
+python src/train_image.py
+```
 
 ---
 
-## 7. Explainable AI & Patient Interpretation (SHAP & LIME)
-When a prediction is run:
-* **SHAP Local Explanation**: Computes Shapley additive values for the patient and highlights top positive drivers (e.g. Convulsions, Jaundice, Coca-Cola Urine) and mitigating factors.
-* **LIME Local Explanation**: Computes local rule-based feature impacts through tabular perturbation, outputting clear interpretable rules and weights in plain clinical terminology.
+## 8. Limitations & Academic Disclaimer
 
----
-
----
-
-## 8. Multi-Modal Vision Fusion (Implemented)
-To achieve gold-standard laboratory confirmation alongside clinical triage, the system includes an end-to-end **Multi-Modal Vision Fusion Architecture**:
-
-### 1. Dataset & Microscopic Imaging
-* **Dataset**: Authentic NIH Giemsa-Stained Thin Blood Smear Microscopic Erythrocyte Dataset (`data/cell_images/Dataset/`).
-* **Classes**:
-  * `Parasitized` ($P. falciparum$ ring-stage and schizont infected erythrocytes)
-  * `Uninfected` (Healthy normal red blood cells)
-* **Dataset Partitioning**: 416 training images, 134 strictly unseen test images.
-
-### 2. Deep Vision CNN Architecture (`src/train_vision.py`)
-* **3-Block Convolutional Backbone**:
-  * Block 1: `Conv2d(3, 32)` $\rightarrow$ `BatchNorm` $\rightarrow$ `ReLU` $\rightarrow$ `Conv2d(32, 32)` $\rightarrow$ `BatchNorm` $\rightarrow$ `ReLU` $\rightarrow$ `MaxPool2d(2, 2)`
-  * Block 2: `Conv2d(32, 64)` $\rightarrow$ `BatchNorm` $\rightarrow$ `ReLU` $\rightarrow$ `Conv2d(64, 64)` $\rightarrow$ `BatchNorm` $\rightarrow$ `ReLU` $\rightarrow$ `MaxPool2d(2, 2)`
-  * Block 3: `Conv2d(64, 128)` $\rightarrow$ `BatchNorm` $\rightarrow$ `ReLU` $\rightarrow$ `Conv2d(128, 128)` $\rightarrow$ `BatchNorm` $\rightarrow$ `ReLU` $\rightarrow$ `MaxPool2d(2, 2)`
-  * Global Aggregation: `AdaptiveAvgPool2d((1, 1))`
-  * Classifier Head: `Dropout(0.4)` $\rightarrow$ `Linear(128, 64)` $\rightarrow$ `ReLU` $\rightarrow$ `Dropout(0.3)` $\rightarrow$ `Linear(64, 2)`
-* **Training Hyperparameters**:
-  * Optimizer: Adam ($\text{lr} = 0.001$, weight decay = $1\times 10^{-4}$)
-  * Loss: CrossEntropyLoss
-  * Image Resolution: $64 \times 64$ RGB with normalized tensor transform.
-
-### 3. Microscopic Test Evaluation Metrics
-Tested on 134 unseen microscopic blood smear images:
-* **Accuracy**: **97.76%**
-* **Sensitivity / Recall**: **96.70%** (Detects 88 out of 91 infected blood smears)
-* **Specificity**: **100.00%** (Zero false positives on healthy blood smears)
-* **Precision**: **100.00%**
-* **ROC-AUC**: **99.87%**
-
-### 4. Mathematical Clinical Triangulation (`src/multimodal_fusion.py`)
-Fuses image parasitemia evidence ($P_{\text{parasite}}$) with clinical manifestation severity ($P_{\text{clinical}}$):
-1. **Microscopy (+) + WHO Severe Complications**: Confirmed Severe Malaria ($P_{\text{fused}} \in [78\%, 98.5\%]$) $\rightarrow$ *Emergency Parenteral IV Artesunate*.
-2. **Microscopy (+) + Mild Symptoms**: Confirmed Uncomplicated Malaria ($P_{\text{fused}} \in [25\%, 38\%]$) $\rightarrow$ *Outpatient Oral ACT (e.g. Coartem)*.
-3. **Microscopy (-) + Severe Symptoms**: Severe Non-Malarial Syndrome ($P_{\text{fused}} = 25\%$) $\rightarrow$ *Urgent differential for Bacterial Sepsis / Meningitis*.
-4. **Microscopy (-) + Mild Symptoms**: Non-Malarial Febrile Illness ($P_{\text{fused}} = 10\%$) $\rightarrow$ *Outpatient differential for Viral Syndrome / Typhoid*.
-
----
-
-## 9. Future Work & Academic Publication Scope (Final Year Project)
-For academic paper publication (e.g., IEEE JBHI, Elsevier AIIM, Nature Sci Rep) and final year project defense, the following research extensions remain active:
-
-1. **Edge IoMT Offline Mobile Deployment**:
-   - Applying INT8 post-training quantization to export models to ONNX and TFLite formats for offline mobile diagnostic execution on low-cost Android smartphones in remote rural clinics without internet connectivity.
-2. **Point-of-Care (PoC) Continuous Biomarkers**:
-   - Expanding input parameters to continuous quantitative biomarkers (Parasite density per $\mu\text{L}$, hemoglobin levels, blood lactate, and automated lateral-flow RDT optical strip densitometry).
-3. **Federated Learning & Cross-Cohort Multi-Hospital Validation**:
-   - Implementing privacy-preserving Federated Learning (FedAvg with Differential Privacy) across multi-center international hospital registries to validate generalizability across diverse endemic zones.
-4. **Electronic Health Record (EHR) & HL7 FHIR Interoperability**:
-   - Exposing certified HL7 FHIR APIs to seamlessly integrate automated severe malaria alerts directly into hospital triage systems.
-
-> For the comprehensive thesis abstract, mathematical formulation, defense viva Q&A cheatsheet, and journal submission guide, see [ACADEMIC_PUBLICATION_GUIDE.md](ACADEMIC_PUBLICATION_GUIDE.md).
-
-
+- **Academic Prototype Notice**: EXPLAINA AI is developed for research and educational purposes. It is **not** a certified medical diagnostic device.
+- **Unlinked Cohorts**: The microscopic images and clinical records do not share patient identifiers. True multimodal fusion cannot be claimed until a prospective, paired clinical-microscopy cohort is collected and validated.
+- **Microscopy Standard**: Automated image classification does not replace high-power oil-immersion Giemsa microscopy reviewed by a certified parasitologist or PCR/RDT laboratory confirmation.

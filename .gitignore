@@ -16,3 +16,9 @@ run_baseline.py
 inspect_details.py
 check_corr.py
 test_app.py
+
+# Raw heavy training dataset (27,000+ files)
+data/cell_images/
+catboost_info/
+static/uploads/*
+!static/uploads/.gitkeep

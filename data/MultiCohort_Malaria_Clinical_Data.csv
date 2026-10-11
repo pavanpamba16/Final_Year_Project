@@ -748,7 +748,6 @@ age,sex,fever,cold,rigor,fatigue,headace,bitter_tongue,vomitting,diarrhea,Convul
 21,1,1,0,1,1,0,1,0,0,0,1,1,0,1,0,0,1,WHO_Multicenter_Endemic_Registry
 68,1,1,1,0,0,1,1,1,0,1,0,0,1,0,1,0,1,WHO_Multicenter_Endemic_Registry
 31,0,1,0,0,1,1,1,1,0,0,1,1,0,0,1,1,1,WHO_Multicenter_Endemic_Registry
-5,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,WHO_Multicenter_Endemic_Registry
 9,1,1,0,1,1,1,0,0,0,0,1,1,0,0,1,1,1,WHO_Multicenter_Endemic_Registry
 35,1,1,1,1,1,1,0,1,1,0,1,1,1,0,1,1,1,WHO_Multicenter_Endemic_Registry
 46,1,1,1,1,0,1,1,0,0,0,0,0,0,0,0,0,0,WHO_Multicenter_Endemic_Registry
@@ -760,7 +759,6 @@ age,sex,fever,cold,rigor,fatigue,headace,bitter_tongue,vomitting,diarrhea,Convul
 33,1,0,1,1,0,1,0,0,0,0,0,0,0,0,0,0,0,WHO_Multicenter_Endemic_Registry
 8,1,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,WHO_Multicenter_Endemic_Registry
 48,0,1,1,1,1,0,1,0,0,0,0,0,0,0,0,0,0,WHO_Multicenter_Endemic_Registry
-3,0,1,0,1,0,1,0,0,0,0,0,0,0,1,0,0,0,WHO_Multicenter_Endemic_Registry
 5,1,0,1,0,0,1,0,1,0,0,0,0,0,0,0,1,0,WHO_Multicenter_Endemic_Registry
 10,0,1,1,1,1,1,0,0,0,0,0,0,1,0,0,0,0,WHO_Multicenter_Endemic_Registry
 68,1,1,1,0,1,0,1,0,1,0,0,0,0,0,0,1,0,WHO_Multicenter_Endemic_Registry
@@ -883,7 +881,6 @@ age,sex,fever,cold,rigor,fatigue,headace,bitter_tongue,vomitting,diarrhea,Convul
 11,1,1,0,0,1,1,1,0,0,0,1,0,0,0,1,0,1,WHO_Multicenter_Endemic_Registry
 32,1,1,1,0,0,1,0,1,1,0,0,0,0,0,0,0,1,WHO_Multicenter_Endemic_Registry
 52,1,1,1,0,1,1,1,0,0,1,0,1,0,1,1,1,1,WHO_Multicenter_Endemic_Registry
-1,0,0,1,0,1,1,1,1,0,0,0,0,0,0,0,0,0,WHO_Multicenter_Endemic_Registry
 49,1,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,WHO_Multicenter_Endemic_Registry
 34,1,0,1,1,1,1,0,1,0,0,0,0,0,0,0,0,0,WHO_Multicenter_Endemic_Registry
 6,1,1,0,1,1,1,1,1,0,1,1,0,0,1,1,1,1,WHO_Multicenter_Endemic_Registry
@@ -991,7 +988,6 @@ age,sex,fever,cold,rigor,fatigue,headace,bitter_tongue,vomitting,diarrhea,Convul
 9,1,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,WHO_Multicenter_Endemic_Registry
 2,0,1,0,0,1,0,1,0,0,1,0,0,0,0,0,0,0,WHO_Multicenter_Endemic_Registry
 20,1,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,WHO_Multicenter_Endemic_Registry
-9,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,WHO_Multicenter_Endemic_Registry
 45,1,1,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,WHO_Multicenter_Endemic_Registry
 26,0,1,0,1,0,1,0,1,0,0,1,0,1,0,0,0,1,WHO_Multicenter_Endemic_Registry
 11,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,WHO_Multicenter_Endemic_Registry

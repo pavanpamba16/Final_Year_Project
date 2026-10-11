@@ -39,7 +39,23 @@ def load_data():
     df = pd.read_csv(data_path)
     if 'cohort_source' in df.columns:
         df = df.drop(columns=['cohort_source'])
-    print(f"Loaded clinical dataset from {data_path}. Total records: {len(df)}")
+        
+    # Check for missing values and duplicates
+    missing_count = df.isnull().sum().sum()
+    if missing_count > 0:
+        print(f"Handling {missing_count} missing values using median imputation...")
+        df = df.fillna(df.median(numeric_only=True))
+    else:
+        print("Dataset verification: 0 missing values (100% complete records).")
+        
+    dup_count = df.duplicated().sum()
+    if dup_count > 0:
+        print(f"Removing {dup_count} duplicate records...")
+        df = df.drop_duplicates().reset_index(drop=True)
+    else:
+        print("Dataset verification: 0 duplicate records (100% unique records).")
+        
+    print(f"Loaded clinical dataset from {data_path}. Total clean unique records: {len(df)}")
     return df
 
 def log_experiment(model_name, preprocessing, balancing, features, params, test_metrics, filepath="experiments.csv"):

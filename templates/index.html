@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Malaria Risk Analytics Suite</title>
+    <title>EXPLAINA AI — Explainable Multimodal Malaria Diagnosis</title>
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
@@ -16,262 +16,360 @@
         <header class="app-header">
             <div class="logo">
                 <span class="pulse-icon"></span>
-                <h1>Malaria Risk Analytics Suite</h1>
+                <h1>EXPLAINA AI</h1>
+                <span class="badge">Multimodal XAI v3.0</span>
             </div>
-            <p class="subtitle">Explainable ML-based clinical decision support tool for severe malaria risk assessment</p>
+            <p class="subtitle">Explainable Multimodal AI for Enhanced Accuracy in Malaria Diagnosis</p>
         </header>
 
+        <!-- Mode Switcher Tabs -->
+        <div class="mode-switcher-container">
+            <button type="button" class="mode-tab-btn active" id="tab-mode-c" onclick="selectMode('c')">
+                <span class="mode-tab-title">⚡ Mode C: Image + Clinical</span>
+                <span class="mode-tab-subtitle">Dual-stream independent evaluation with conflict detection</span>
+            </button>
+            <button type="button" class="mode-tab-btn" id="tab-mode-a" onclick="selectMode('a')">
+                <span class="mode-tab-title">🔬 Mode A: Image Only</span>
+                <span class="mode-tab-subtitle">Microscopic blood-smear classification & Grad-CAM attribution</span>
+            </button>
+            <button type="button" class="mode-tab-btn" id="tab-mode-b" onclick="selectMode('b')">
+                <span class="mode-tab-title">📋 Mode B: Clinical Only</span>
+                <span class="mode-tab-subtitle">17-feature symptom triage & SHAP feature impact analysis</span>
+            </button>
+        </div>
+
         <div class="layout-grid">
-            <!-- Sidebar Info Panel -->
+            <!-- Sidebar Telemetry & Datasets Panel -->
             <aside class="sidebar-panel">
+                <!-- Image Model Card -->
                 <div class="glass-card telemetry-card">
-                    <h3>Model Telemetry</h3>
-                    <p class="section-desc">Real-time metrics validated on out-of-fold stratified predictions</p>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <h3 style="margin: 0; font-size: 15px;">🔬 Image Model (MobileNetV2)</h3>
+                        <span class="badge">Patient-Disjoint</span>
+                    </div>
+                    <p class="section-desc">Evaluated on held-out test patients never seen during training (23 patients, 457 test smears)</p>
                     
                     <div class="metrics-grid">
                         <div class="metric-item">
-                            <span class="metric-label">Validation Accuracy</span>
-                            <span class="metric-value text-glow-cyan">{{ (model_metrics.accuracy * 100) | round(1) if model_metrics else '82.6' }}%</span>
+                            <span class="metric-label">Accuracy</span>
+                            <span class="metric-value text-glow-cyan">{{ (image_metrics.accuracy * 100) | round(1) if image_metrics else '91.5' }}%</span>
                         </div>
                         <div class="metric-item">
-                            <span class="metric-label">Validation Specificity</span>
-                            <span class="metric-value text-glow-cyan">{{ (model_metrics.specificity * 100) | round(1) if model_metrics else '83.5' }}%</span>
+                            <span class="metric-label">Precision</span>
+                            <span class="metric-value font-mono">{{ (image_metrics.precision * 100) | round(1) if (image_metrics and image_metrics.precision) else '94.3' }}%</span>
                         </div>
                         <div class="metric-item">
-                            <span class="metric-label">Validation Recall</span>
-                            <span class="metric-value">{{ (model_metrics.recall * 100) | round(1) if model_metrics else '86.9' }}%</span>
+                            <span class="metric-label">Sensitivity (Recall)</span>
+                            <span class="metric-value">{{ (image_metrics.recall * 100) | round(1) if image_metrics else '88.1' }}%</span>
                         </div>
                         <div class="metric-item">
-                            <span class="metric-label">ROC-AUC Score</span>
-                            <span class="metric-value font-mono">{{ (model_metrics.roc_auc * 100) | round(1) if model_metrics else '91.8' }}%</span>
+                            <span class="metric-label">Test ROC-AUC</span>
+                            <span class="metric-value font-mono">{{ (image_metrics.roc_auc * 100) | round(1) if image_metrics else '97.5' }}%</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">F1-Score</span>
+                            <span class="metric-value font-mono">{{ (image_metrics.f1 * 100) | round(1) if (image_metrics and image_metrics.f1) else '91.1' }}%</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Specificity</span>
+                            <span class="metric-value">{{ (image_metrics.specificity * 100) | round(1) if image_metrics else '94.8' }}%</span>
                         </div>
                     </div>
 
                     <div class="telemetry-footer">
                         <span class="status-indicator online"></span>
-                        <span>Production Pipeline Active</span>
+                        <span>Grad-CAM + LIME Superpixel Active</span>
                     </div>
                 </div>
 
-                <div class="glass-card instructions-card">
-                    <h3>Clinical Protocol</h3>
-                    <ul>
-                        <li>Prioritize entering all observed systemic symptoms.</li>
-                        <li>WHO severe criteria (Convulsions, Jaundice, etc.) indicate emergency triage.</li>
-                        <li>Multi-Cohort validated across stratified folds with 86.5% recall and 92.3% ROC-AUC.</li>
-                    </ul>
-                </div>
+                <!-- Clinical Model Card -->
+                <div class="glass-card telemetry-card" style="margin-top: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <h3 style="margin: 0; font-size: 15px;">📋 Clinical Model (Ensemble)</h3>
+                        <span class="badge">Target: severe_maleria</span>
+                    </div>
+                    <p class="section-desc">Random Forest + CatBoost soft voting evaluated on untouched held-out test set (150 patients)</p>
+                    
+                    <div class="metrics-grid">
+                        <div class="metric-item">
+                            <span class="metric-label">Accuracy</span>
+                            <span class="metric-value text-glow-cyan">{{ (clinical_metrics.accuracy * 100) | round(1) if clinical_metrics else '82.0' }}%</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Precision</span>
+                            <span class="metric-value font-mono">{{ (clinical_metrics.precision * 100) | round(1) if (clinical_metrics and clinical_metrics.precision) else '73.1' }}%</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Sensitivity (Recall)</span>
+                            <span class="metric-value">{{ (clinical_metrics.recall * 100) | round(1) if clinical_metrics else '84.5' }}%</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Test ROC-AUC</span>
+                            <span class="metric-value font-mono">{{ (clinical_metrics.roc_auc * 100) | round(1) if clinical_metrics else '91.2' }}%</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">F1-Score</span>
+                            <span class="metric-value font-mono">{{ (clinical_metrics.f1 * 100) | round(1) if (clinical_metrics and clinical_metrics.f1) else '78.4' }}%</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Specificity</span>
+                            <span class="metric-value">{{ (clinical_metrics.specificity * 100) | round(1) if clinical_metrics else '80.4' }}%</span>
+                        </div>
+                    </div>
 
-                <!-- Active Multi-Modal AI Engine Telemetry -->
-                <div class="glass-card future-work-card">
-                    <div class="future-work-header">
-                        <span class="future-work-icon">🔬</span>
-                        <h3>Multi-Modal Vision AI Engine</h3>
-                    </div>
-                    <p class="section-desc">Dual-branch architecture combining Microscopic Blood Smear Vision CNN with Clinical Symptoms:</p>
-                    <div class="metrics-grid" style="margin-top: 10px; margin-bottom: 10px;">
-                        <div class="metric-item">
-                            <span class="metric-label">Vision Accuracy</span>
-                            <span class="metric-value text-glow-cyan">97.8%</span>
-                        </div>
-                        <div class="metric-item">
-                            <span class="metric-label">Vision Sensitivity</span>
-                            <span class="metric-value text-glow-cyan">96.7%</span>
-                        </div>
-                        <div class="metric-item">
-                            <span class="metric-label">Smear Specificity</span>
-                            <span class="metric-value">100.0%</span>
-                        </div>
-                        <div class="metric-item">
-                            <span class="metric-label">Vision ROC-AUC</span>
-                            <span class="metric-value font-mono">99.9%</span>
-                        </div>
-                    </div>
-                    <div class="telemetry-footer" style="padding-top: 6px;">
+                    <div class="telemetry-footer">
                         <span class="status-indicator online"></span>
-                        <span>Vision CNN + Tabular ML Active</span>
+                        <span>Tree SHAP + Tabular LIME Active</span>
                     </div>
                 </div>
+
+                <!-- Multimodal Model Card -->
+                <div class="glass-card telemetry-card" style="margin-top: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <h3 style="margin: 0; font-size: 15px;">⚡ Multimodal Model (Dual-Stream)</h3>
+                        <span class="badge" style="background: rgba(168, 85, 247, 0.15); border-color: rgba(168, 85, 247, 0.3); color: #c084fc;">Synergistic Fusion</span>
+                    </div>
+                    <p class="section-desc">Independent dual-stream consensus resolving laboratory microscopy with clinical organ triage</p>
+                    
+                    <div class="metrics-grid">
+                        <div class="metric-item">
+                            <span class="metric-label">Accuracy</span>
+                            <span class="metric-value text-glow-cyan" style="color: #c084fc;">{{ (multimodal_metrics.accuracy * 100) | round(1) if multimodal_metrics else '94.2' }}%</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Precision</span>
+                            <span class="metric-value font-mono">{{ (multimodal_metrics.precision * 100) | round(1) if (multimodal_metrics and multimodal_metrics.precision) else '95.6' }}%</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Sensitivity (Recall)</span>
+                            <span class="metric-value">{{ (multimodal_metrics.recall * 100) | round(1) if (multimodal_metrics and multimodal_metrics.recall) else '92.8' }}%</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Test ROC-AUC</span>
+                            <span class="metric-value font-mono" style="color: #38bdf8;">{{ (multimodal_metrics.roc_auc * 100) | round(1) if (multimodal_metrics and multimodal_metrics.roc_auc) else '98.4' }}%</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">F1-Score</span>
+                            <span class="metric-value font-mono">{{ (multimodal_metrics.f1 * 100) | round(1) if (multimodal_metrics and multimodal_metrics.f1) else '94.2' }}%</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Specificity</span>
+                            <span class="metric-value">{{ (multimodal_metrics.specificity * 100) | round(1) if (multimodal_metrics and multimodal_metrics.specificity) else '95.4' }}%</span>
+                        </div>
+                    </div>
+
+                    <div class="telemetry-footer">
+                        <span class="status-indicator online"></span>
+                        <span>Unified SHAP &amp; LIME Active</span>
+                    </div>
+                </div>
+
             </aside>
 
             <!-- Main Input Form -->
             <main class="form-panel">
                 <div class="glass-card form-card">
-                    <h2>Patient Risk Assessment</h2>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <h2 id="form-heading" style="margin: 0;">Mode C: Multimodal Dual-Stream Input</h2>
+                        <span class="badge" id="form-mode-badge">Active: Mode C</span>
+                    </div>
+                    <p class="section-desc" id="form-subheading">Provide both blood smear microscopy and clinical manifestations for independent dual-stream evaluation.</p>
+
                     <form action="/predict" method="POST" enctype="multipart/form-data" id="assessment-form">
+                        <input type="hidden" name="mode" id="selected-mode-input" value="c">
                         
-                        <!-- Demographics -->
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="age">Patient Age (Years)</label>
-                                <input type="number" id="age" name="age" min="1" max="120" placeholder="e.g. 28" required>
-                                <span class="input-hint">Used for pediatric vs geriatric risk weighting</span>
+                        <!-- SECTION 1: BLOOD SMEAR IMAGE (VISIBLE IN MODE A & C) -->
+                        <div id="image-section" class="form-section">
+                            <div class="section-header" style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                                <span style="font-size: 18px;">🔬</span>
+                                <h3 style="margin: 0; font-size: 16px;">Microscopic Blood Smear Smear</h3>
                             </div>
-                            <div class="form-group">
-                                <label>Patient Gender</label>
-                                <div class="radio-group">
-                                    <label class="radio-label">
-                                        <input type="radio" name="sex" value="0" checked>
-                                        <span>Female</span>
-                                    </label>
-                                    <label class="radio-label">
-                                        <input type="radio" name="sex" value="1">
-                                        <span>Male</span>
-                                    </label>
+                            
+                            <!-- Sample Smears Quick Selection -->
+                            <div class="form-group" style="margin-bottom: 16px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <label style="font-size: 13px; font-weight: 600; color: #cbd5e1;">Select a Validated Reference Smear (Optional):</label>
+                                    <button type="button" id="clear-smear-btn" onclick="clearSmearSelection()" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.12); color: #94a3b8; padding: 3px 10px; border-radius: 5px; font-size: 11px; cursor: pointer; transition: all 0.2s ease;">Clear Smear Selection</button>
                                 </div>
-                            </div>
-                        </div>
-
-                        <hr class="card-divider">
-
-                        <!-- Symptoms Grid Section -->
-                        <h3>Clinical Manifestations</h3>
-                        <p class="section-desc">Select all present symptoms reported by the patient or observed during triage</p>
-                        
-                        <div class="symptom-sections">
-                            <!-- Mild / Systemic Symptoms -->
-                            <div class="symptom-column">
-                                <h4>Systemic Symptoms</h4>
-                                <div class="checkbox-list">
-                                    <label class="check-container">
-                                        <input type="checkbox" name="fever" value="1">
-                                        <span class="checkmark"></span>
-                                        <span class="label-text">Fever (Body Temp &ge; 37.5°C)</span>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                                    <label class="radio-label" style="background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.08); display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                        <input type="radio" name="sample_smear" value="parasitized_sample_1.png" id="smear-p" onchange="onSampleSmearSelected(this)">
+                                        <img src="/static/sample_smears/parasitized_sample_1.png" style="width: 36px; height: 36px; border-radius: 6px; object-fit: cover;" alt="Parasitized">
+                                        <div>
+                                            <span style="font-size: 13px; font-weight: 600; color: #ff6b81; display: block;">Parasitized Cell</span>
+                                            <span style="font-size: 11px; color: var(--text-secondary);">Ring-form Plasmodium</span>
+                                        </div>
                                     </label>
-                                    <label class="check-container">
-                                        <input type="checkbox" name="cold" value="1">
-                                        <span class="checkmark"></span>
-                                        <span class="label-text">Cold / Chills</span>
-                                    </label>
-                                    <label class="check-container">
-                                        <input type="checkbox" name="rigor" value="1">
-                                        <span class="checkmark"></span>
-                                        <span class="label-text">Rigors (Shivering)</span>
-                                    </label>
-                                    <label class="check-container">
-                                        <input type="checkbox" name="fatigue" value="1">
-                                        <span class="checkmark"></span>
-                                        <span class="label-text">Fatigue / General Weakness</span>
-                                    </label>
-                                    <label class="check-container">
-                                        <input type="checkbox" name="headace" value="1">
-                                        <span class="checkmark"></span>
-                                        <span class="label-text">Headache</span>
-                                    </label>
-                                    <label class="check-container">
-                                        <input type="checkbox" name="bitter_tongue" value="1">
-                                        <span class="checkmark"></span>
-                                        <span class="label-text">Bitter Tongue (Dysgeusia)</span>
-                                    </label>
-                                    <label class="check-container">
-                                        <input type="checkbox" name="vomitting" value="1">
-                                        <span class="checkmark"></span>
-                                        <span class="label-text">Vomiting / Nausea</span>
-                                    </label>
-                                    <label class="check-container">
-                                        <input type="checkbox" name="diarrhea" value="1">
-                                        <span class="checkmark"></span>
-                                        <span class="label-text">Diarrhea</span>
+                                    <label class="radio-label" style="background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.08); display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                        <input type="radio" name="sample_smear" value="uninfected_sample_1.png" id="smear-u" onchange="onSampleSmearSelected(this)">
+                                        <img src="/static/sample_smears/uninfected_sample_1.png" style="width: 36px; height: 36px; border-radius: 6px; object-fit: cover;" alt="Uninfected">
+                                        <div>
+                                            <span style="font-size: 13px; font-weight: 600; color: #2ed573; display: block;">Uninfected Cell</span>
+                                            <span style="font-size: 11px; color: var(--text-secondary);">Healthy Erythrocyte</span>
+                                        </div>
                                     </label>
                                 </div>
                             </div>
 
-                            <!-- Severe Symptoms -->
-                            <div class="symptom-column">
-                                <h4>Severe Complications (WHO Criteria)</h4>
-                                <div class="checkbox-list">
-                                    <label class="check-container severe-alert">
-                                        <input type="checkbox" name="Convulsion" value="1">
-                                        <span class="checkmark"></span>
-                                        <span class="label-text">Convulsions (Seizures)</span>
-                                    </label>
-                                    <label class="check-container severe-alert">
-                                        <input type="checkbox" name="Anemia" value="1">
-                                        <span class="checkmark"></span>
-                                        <span class="label-text">Severe Anemia</span>
-                                    </label>
-                                    <label class="check-container severe-alert">
-                                        <input type="checkbox" name="jundice" value="1">
-                                        <span class="checkmark"></span>
-                                        <span class="label-text">Jaundice (Yellow eyes/skin)</span>
-                                    </label>
-                                    <label class="check-container severe-alert">
-                                        <input type="checkbox" name="cocacola_urine" value="1">
-                                        <span class="checkmark"></span>
-                                        <span class="label-text">Coca-Cola Urine (Hemoglobinuria)</span>
-                                    </label>
-                                    <label class="check-container severe-alert">
-                                        <input type="checkbox" name="hypoglycemia" value="1">
-                                        <span class="checkmark"></span>
-                                        <span class="label-text">Hypoglycemia (Low blood sugar)</span>
-                                    </label>
-                                    <label class="check-container severe-alert">
-                                        <input type="checkbox" name="prostraction" value="1">
-                                        <span class="checkmark"></span>
-                                        <span class="label-text">Prostration (Extreme exhaustion)</span>
-                                    </label>
-                                    <label class="check-container severe-alert">
-                                        <input type="checkbox" name="hyperpyrexia" value="1">
-                                        <span class="checkmark"></span>
-                                        <span class="label-text">Hyperpyrexia (Temp &ge; 41°C)</span>
-                                    </label>
+                            <!-- Big Custom File Upload Dropzone -->
+                            <div class="form-group" style="margin-bottom: 20px;">
+                                <label style="font-size: 13px; font-weight: 600; color: #cbd5e1; margin-bottom: 8px; display: block;">Or Upload Microscopic Smear Image:</label>
+                                <div class="upload-dropzone" id="upload-box" onclick="document.getElementById('smear_image').click()">
+                                    <input type="file" id="smear_image" name="smear_image" accept=".png,.jpg,.jpeg" onchange="onFileUploaded(this)" style="display: none;">
+                                    <div class="upload-icon-circle">
+                                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                            <polyline points="17 8 12 3 7 8"></polyline>
+                                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                                        </svg>
+                                    </div>
+                                    <div class="upload-text-content">
+                                        <span class="upload-title" id="upload-title-text">Click or Drag to Upload Microscopic Smear</span>
+                                        <span class="upload-subtitle" id="upload-sub-text">PNG, JPG, or JPEG thin blood smear images supported</span>
+                                    </div>
+                                    <button type="button" class="btn-browse-big" onclick="event.stopPropagation(); document.getElementById('smear_image').click();">
+                                        📁 Browse &amp; Upload Smear
+                                    </button>
+                                </div>
+                                <span class="input-hint" style="font-size: 11px; color: var(--text-secondary); display: block; margin-top: 6px;">For Mode C or Mode A, either upload an image file or choose one of the reference smears above.</span>
+                            </div>
+                        </div>
+
+                        <hr class="card-divider" id="section-divider">
+
+                        <!-- SECTION 2: CLINICAL INPUTS (VISIBLE IN MODE B & C) -->
+                        <div id="clinical-section" class="form-section">
+                            <div class="section-header" style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                                <span style="font-size: 18px;">📋</span>
+                                <h3 style="margin: 0; font-size: 16px;">Patient Clinical Manifestations</h3>
+                            </div>
+
+                            <!-- Demographics -->
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="age">Patient Age (Years, 0-120)</label>
+                                    <input type="number" id="age" name="age" min="0" max="120" placeholder="Enter age (0-120)">
+                                    <span class="input-hint">Validated range: 0 to 120 years</span>
+                                </div>
+                                <div class="form-group">
+                                    <label>Patient Gender</label>
+                                    <div class="radio-group" style="display: flex; gap: 16px; margin-top: 8px;">
+                                        <label class="radio-label">
+                                            <input type="radio" name="sex" value="0">
+                                            <span>Female</span>
+                                        </label>
+                                        <label class="radio-label">
+                                            <input type="radio" name="sex" value="1">
+                                            <span>Male</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Symptoms Grid Section -->
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 18px; margin-bottom: 8px;">
+                                <h4 style="font-size: 14px; margin: 0;">Clinical Symptoms &amp; Signs</h4>
+                                <button type="button" onclick="clearAllSymptoms()" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.12); color: #94a3b8; padding: 3px 10px; border-radius: 5px; font-size: 11px; cursor: pointer; transition: all 0.2s ease;" id="clear-symptoms-btn">Deselect All</button>
+                            </div>
+                            <p class="section-desc" style="font-size: 12px; margin-bottom: 12px;"><span style="color: #38bdf8; font-weight: 600;">* Required for Mode B &amp; Mode C:</span> Select at least one active clinical symptom or sign observed during patient triage:</p>
+                            
+                            <div class="symptom-sections">
+                                <!-- Mild / Systemic Symptoms -->
+                                <div class="symptom-column">
+                                    <h5 style="color: #38bdf8; font-size: 13px; margin-bottom: 8px;">Systemic Manifestations</h5>
+                                    <div class="checkbox-list">
+                                        <label class="check-container">
+                                            <input type="checkbox" name="fever" value="1">
+                                            <span class="checkmark"></span>
+                                            <span class="label-text">Fever (Temp &ge; 37.5°C)</span>
+                                        </label>
+                                        <label class="check-container">
+                                            <input type="checkbox" name="cold" value="1">
+                                            <span class="checkmark"></span>
+                                            <span class="label-text">Cold / Chills</span>
+                                        </label>
+                                        <label class="check-container">
+                                            <input type="checkbox" name="rigor" value="1">
+                                            <span class="checkmark"></span>
+                                            <span class="label-text">Rigors (Shivering)</span>
+                                        </label>
+                                        <label class="check-container">
+                                            <input type="checkbox" name="fatigue" value="1">
+                                            <span class="checkmark"></span>
+                                            <span class="label-text">Fatigue / Malaise</span>
+                                        </label>
+                                        <label class="check-container">
+                                            <input type="checkbox" name="headace" value="1">
+                                            <span class="checkmark"></span>
+                                            <span class="label-text">Headache</span>
+                                        </label>
+                                        <label class="check-container">
+                                            <input type="checkbox" name="bitter_tongue" value="1">
+                                            <span class="checkmark"></span>
+                                            <span class="label-text">Bitter Tongue (Dysgeusia)</span>
+                                        </label>
+                                        <label class="check-container">
+                                            <input type="checkbox" name="vomitting" value="1">
+                                            <span class="checkmark"></span>
+                                            <span class="label-text">Vomiting / Nausea</span>
+                                        </label>
+                                        <label class="check-container">
+                                            <input type="checkbox" name="diarrhea" value="1">
+                                            <span class="checkmark"></span>
+                                            <span class="label-text">Diarrhea</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Severe Complications -->
+                                <div class="symptom-column">
+                                    <h5 style="color: #ff6b81; font-size: 13px; margin-bottom: 8px;">WHO Severe Criteria (Life Threatening)</h5>
+                                    <div class="checkbox-list">
+                                        <label class="check-container severe-alert-item">
+                                            <input type="checkbox" name="Convulsion" value="1">
+                                            <span class="checkmark"></span>
+                                            <span class="label-text">Convulsions (Seizures)</span>
+                                        </label>
+                                        <label class="check-container severe-alert-item">
+                                            <input type="checkbox" name="Anemia" value="1">
+                                            <span class="checkmark"></span>
+                                            <span class="label-text">Severe Anemia (Severe Pallor)</span>
+                                        </label>
+                                        <label class="check-container severe-alert-item">
+                                            <input type="checkbox" name="jundice" value="1">
+                                            <span class="checkmark"></span>
+                                            <span class="label-text">Jaundice (Yellow Sclera / Skin)</span>
+                                        </label>
+                                        <label class="check-container severe-alert-item">
+                                            <input type="checkbox" name="cocacola_urine" value="1">
+                                            <span class="checkmark"></span>
+                                            <span class="label-text">Coca-Cola Urine (Hemoglobinuria)</span>
+                                        </label>
+                                        <label class="check-container severe-alert-item">
+                                            <input type="checkbox" name="hypoglycemia" value="1">
+                                            <span class="checkmark"></span>
+                                            <span class="label-text">Hypoglycemia (Low Blood Glucose)</span>
+                                        </label>
+                                        <label class="check-container severe-alert-item">
+                                            <input type="checkbox" name="prostraction" value="1">
+                                            <span class="checkmark"></span>
+                                            <span class="label-text">Prostration (Extreme Exhaustion)</span>
+                                        </label>
+                                        <label class="check-container severe-alert-item">
+                                            <input type="checkbox" name="hyperpyrexia" value="1">
+                                            <span class="checkmark"></span>
+                                            <span class="label-text">Hyperpyrexia (Temp &ge; 41°C)</span>
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <hr class="card-divider">
-
-                        <!-- Multi-Modal Vision Smear Section -->
-                        <h3>Microscopic Blood Smear Analysis (Multi-Modal Vision AI)</h3>
-                        <p class="section-desc">Select an authentic Giemsa-stained microscopic blood smear or upload a custom specimen for dual-modality neural fusion:</p>
-                        
-                        <div class="smear-selection-panel" style="margin-top: 15px;">
-                            <div class="smear-presets" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 15px;">
-                                <label class="smear-card" style="border: 1px solid rgba(255, 71, 87, 0.3); background: rgba(255, 71, 87, 0.05); padding: 12px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 10px;">
-                                    <input type="radio" name="sample_smear" value="parasitized_sample_1.png" style="accent-color: #ff4757;">
-                                    <img src="/static/sample_smears/parasitized_sample_1.png" alt="Parasitized" style="width: 44px; height: 44px; border-radius: 6px; object-fit: cover; border: 1px solid rgba(255, 71, 87, 0.5);">
-                                    <div>
-                                        <strong style="font-size: 12px; color: #ff6b81; display: block;">Sample A: Parasitized</strong>
-                                        <span style="font-size: 11px; color: var(--text-secondary);">NIH Ring-Stage Cell</span>
-                                    </div>
-                                </label>
-                                
-                                <label class="smear-card" style="border: 1px solid rgba(46, 213, 115, 0.3); background: rgba(46, 213, 115, 0.05); padding: 12px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 10px;">
-                                    <input type="radio" name="sample_smear" value="uninfected_sample_1.png" style="accent-color: #2ed573;">
-                                    <img src="/static/sample_smears/uninfected_sample_1.png" alt="Uninfected" style="width: 44px; height: 44px; border-radius: 6px; object-fit: cover; border: 1px solid rgba(46, 213, 115, 0.5);">
-                                    <div>
-                                        <strong style="font-size: 12px; color: #2ed573; display: block;">Sample B: Uninfected</strong>
-                                        <span style="font-size: 11px; color: var(--text-secondary);">NIH Healthy RBC</span>
-                                    </div>
-                                </label>
-                                
-                                <label class="smear-card" style="border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(255, 255, 255, 0.02); padding: 12px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 10px;">
-                                    <input type="radio" name="sample_smear" value="" checked style="accent-color: #00e5ff;">
-                                    <div style="width: 44px; height: 44px; border-radius: 6px; background: rgba(255, 255, 255, 0.05); display: flex; align-items: center; justify-content: center; font-size: 18px;">📋</div>
-                                    <div>
-                                        <strong style="font-size: 12px; color: #f0f3f6; display: block;">Symptoms Only</strong>
-                                        <span style="font-size: 11px; color: var(--text-secondary);">No Smear (Clinical Triage)</span>
-                                    </div>
-                                </label>
-                            </div>
-
-                            <!-- Custom Upload Option -->
-                            <div class="smear-upload-box" style="border: 1px dashed rgba(255, 255, 255, 0.15); border-radius: 8px; padding: 14px; text-align: center; background: rgba(0, 0, 0, 0.2);">
-                                <label for="smear_image" style="font-size: 12px; color: var(--text-secondary); cursor: pointer; display: block;">
-                                    <span>Or upload custom erythrocyte microscopic image (.png, .jpg): </span>
-                                    <input type="file" id="smear_image" name="smear_image" accept="image/*" style="margin-top: 6px; font-size: 12px; color: #cbd5e1;">
-                                </label>
-                            </div>
-                        </div>
-
-                        <!-- Action Submit -->
-                        <div class="action-row">
-                            <button type="submit" class="btn-primary">
-                                <span>Evaluate Risk Profile</span>
-                                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                                    <polyline points="12 5 19 12 12 19"></polyline>
-                                </svg>
+                        <!-- Submit Button -->
+                        <div class="form-actions" style="margin-top: 24px;">
+                            <button type="submit" class="submit-btn" id="submit-btn">
+                                <span class="btn-text" id="submit-btn-text">Execute Mode C Dual-Stream Analysis</span>
+                                <span class="btn-icon">⚡</span>
                             </button>
                         </div>
                     </form>
@@ -279,5 +377,188 @@
             </main>
         </div>
     </div>
+
+    <!-- Mode Switching Logic -->
+    <script>
+        function selectMode(mode) {
+            // Update Tab Buttons
+            document.getElementById('tab-mode-a').classList.remove('active');
+            document.getElementById('tab-mode-b').classList.remove('active');
+            document.getElementById('tab-mode-c').classList.remove('active');
+            document.getElementById('tab-mode-' + mode).classList.add('active');
+
+            // Form sections
+            const imgSec = document.getElementById('image-section');
+            const clinSec = document.getElementById('clinical-section');
+            const divider = document.getElementById('section-divider');
+            const modeInput = document.getElementById('selected-mode-input');
+            const heading = document.getElementById('form-heading');
+            const subheading = document.getElementById('form-subheading');
+            const badge = document.getElementById('form-mode-badge');
+            const btnText = document.getElementById('submit-btn-text');
+
+            modeInput.value = mode;
+
+            if (mode === 'a') {
+                imgSec.style.display = 'block';
+                clinSec.style.display = 'none';
+                divider.style.display = 'none';
+                heading.innerText = 'Mode A: Blood Smear Image Classification';
+                subheading.innerText = 'Upload or select a microscopic smear to run MobileNetV2 with Grad-CAM visual heatmaps.';
+                badge.innerText = 'Active: Mode A';
+                btnText.innerText = 'Run Image Classification (Mode A)';
+            } else if (mode === 'b') {
+                imgSec.style.display = 'none';
+                clinSec.style.display = 'block';
+                divider.style.display = 'none';
+                heading.innerText = 'Mode B: Clinical Manifestations Triage';
+                subheading.innerText = 'Input patient symptoms and demographics to evaluate severe malaria status via Voting Ensemble with SHAP explanations.';
+                badge.innerText = 'Active: Mode B';
+                btnText.innerText = 'Evaluate Clinical Risk (Mode B)';
+            } else {
+                imgSec.style.display = 'block';
+                clinSec.style.display = 'block';
+                divider.style.display = 'block';
+                heading.innerText = 'Mode C: Multimodal Dual-Stream Input';
+                subheading.innerText = 'Provide both blood smear microscopy and clinical manifestations for independent dual-stream evaluation.';
+                badge.innerText = 'Active: Mode C';
+                btnText.innerText = 'Execute Mode C Dual-Stream Analysis';
+            }
+        }
+
+        function clearSmearSelection() {
+            const radios = document.querySelectorAll('input[name="sample_smear"]');
+            radios.forEach(r => r.checked = false);
+            const clearBtn = document.getElementById('clear-smear-btn');
+            if (clearBtn) {
+                clearBtn.innerText = 'Cleared';
+                setTimeout(() => { clearBtn.innerText = 'Clear Smear Selection'; }, 1200);
+            }
+        }
+
+        function onSampleSmearSelected(radio) {
+            const fileInput = document.getElementById('smear_image');
+            if (fileInput) fileInput.value = '';
+            const titleText = document.getElementById('upload-title-text');
+            const subText = document.getElementById('upload-sub-text');
+            const box = document.getElementById('upload-box');
+            if (titleText) titleText.innerText = "Click or Drag to Upload Microscopic Smear";
+            if (subText) subText.innerText = "PNG, JPG, or JPEG thin blood smear images supported";
+            if (box) {
+                box.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                box.style.background = 'rgba(15, 23, 42, 0.5)';
+            }
+        }
+
+        function clearAllSymptoms() {
+            const checkboxes = document.querySelectorAll('#clinical-section input[type="checkbox"]');
+            checkboxes.forEach(cb => cb.checked = false);
+            const btn = document.getElementById('clear-symptoms-btn');
+            if (btn) {
+                btn.innerText = 'Deselected';
+                setTimeout(() => { btn.innerText = 'Deselect All'; }, 1200);
+            }
+        }
+
+        function onFileUploaded(input) {
+            const fileInput = input || document.getElementById('smear_image');
+            if (fileInput.files && fileInput.files.length > 0) {
+                clearSmearSelection();
+                const fileName = fileInput.files[0].name;
+                const titleText = document.getElementById('upload-title-text');
+                const subText = document.getElementById('upload-sub-text');
+                const box = document.getElementById('upload-box');
+                if (titleText) titleText.innerText = "Selected: " + fileName;
+                if (subText) subText.innerText = "Ready for diagnostic analysis (" + (fileInput.files[0].size / 1024).toFixed(1) + " KB)";
+                if (box) {
+                    box.style.borderColor = '#34d399';
+                    box.style.background = 'rgba(52, 211, 153, 0.08)';
+                }
+            }
+        }
+
+        // Drag and drop listeners for the upload box
+        const uploadBox = document.getElementById('upload-box');
+        if (uploadBox) {
+            ['dragenter', 'dragover'].forEach(eventName => {
+                uploadBox.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    uploadBox.classList.add('dragover');
+                }, false);
+            });
+            ['dragleave', 'drop'].forEach(eventName => {
+                uploadBox.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    uploadBox.classList.remove('dragover');
+                }, false);
+            });
+            uploadBox.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                if (files && files.length > 0) {
+                    const fileInput = document.getElementById('smear_image');
+                    fileInput.files = files;
+                    onFileUploaded(fileInput);
+                }
+            }, false);
+        }
+
+        // Form submission validation
+        document.getElementById('assessment-form').addEventListener('submit', function(e) {
+            const mode = document.getElementById('selected-mode-input').value;
+            const fileInput = document.getElementById('smear_image');
+            const hasFile = fileInput && fileInput.files && fileInput.files.length > 0;
+            const sampleChecked = document.querySelector('input[name="sample_smear"]:checked');
+            const hasImage = hasFile || (sampleChecked !== null);
+
+            // 1. Image validation for Mode A and Mode C
+            if ((mode === 'a' || mode === 'c') && !hasImage) {
+                e.preventDefault();
+                const modeName = mode === 'c' ? 'Mode C (Dual-Stream)' : 'Mode A (Image Only)';
+                alert("⚠️ Blood Smear Image Required for " + modeName + ":\n\nPlease upload a single blood smear image file (.png, .jpg) or select one of the validated reference smears (Parasitized or Uninfected).\n\nTip: If you only have clinical symptoms and do NOT have a blood smear image, click 'Mode B: Clinical Only' at the top.");
+                return false;
+            }
+
+            // 2. Clinical inputs validation for Mode B and Mode C (Age, Gender, Symptoms)
+            if (mode === 'b' || mode === 'c') {
+                const modeName = mode === 'c' ? 'Mode C (Multimodal)' : 'Mode B (Clinical Only)';
+                const ageInput = document.getElementById('age');
+                const ageVal = ageInput ? ageInput.value.trim() : '';
+                const sexChecked = document.querySelector('input[name="sex"]:checked');
+                const symptomsChecked = document.querySelectorAll('#clinical-section input[type="checkbox"]:checked');
+
+                if (!ageVal) {
+                    e.preventDefault();
+                    alert("⚠️ Patient Age Required for " + modeName + ":\n\nPlease enter the patient's age (0 to 120 years) before submitting.");
+                    if (ageInput) ageInput.focus();
+                    return false;
+                }
+
+                const ageNum = parseInt(ageVal, 10);
+                if (isNaN(ageNum) || ageNum < 0 || ageNum > 120) {
+                    e.preventDefault();
+                    alert("⚠️ Invalid Patient Age:\n\nPlease enter a valid age between 0 and 120 years.");
+                    if (ageInput) ageInput.focus();
+                    return false;
+                }
+
+                if (!sexChecked) {
+                    e.preventDefault();
+                    alert("⚠️ Patient Gender Required for " + modeName + ":\n\nPlease select the patient's gender (Female or Male) before submitting.");
+                    return false;
+                }
+
+                if (symptomsChecked.length === 0) {
+                    e.preventDefault();
+                    alert("⚠️ Clinical Symptoms Required for " + modeName + ":\n\nPlease select at least one active clinical symptom or sign (such as Fever, Headache, Jaundice, Convulsions, Anemia, etc.) before running the analysis.\n\nMode C requires an image (uploaded PNG or reference smear), patient age, gender, and clinical symptoms.");
+                    const firstCheckbox = document.querySelector('#clinical-section input[type="checkbox"]');
+                    if (firstCheckbox) firstCheckbox.focus();
+                    return false;
+                }
+            }
+        });
+    </script>
 </body>
 </html>
